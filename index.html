@@ -2054,7 +2054,7 @@ function frame(now){
 function step(now){
   const t = clock.getElapsedTime(), playing = !!Synth.timer;
   for (const tw of [...tweens]){ if (now < tw.s) continue; const p = Math.min(1, (now - tw.s) / tw.ms); tw.fn(tw.ez(p)); if (p >= 1){ tweens.splice(tweens.indexOf(tw), 1); tw.res(); } }
-  hallLook.yaw += (hallLook.tyaw - hallLook.yaw) * .12; hallLook.pitch += (hallLook.tpitch - hallLook.pitch) * .12;
+  { const fdt = Math.min(.1, Math.max(0, (now - (perf.lf || now)) / 1000)); perf.lf = now; const kk = 1 - Math.exp(-fdt * 9); hallLook.yaw += (hallLook.tyaw - hallLook.yaw) * kk; hallLook.pitch += (hallLook.tpitch - hallLook.pitch) * kk; }
   if (matchMedia("(hover: none)").matches){ look.tx = 0; look.ty = 0; }
   look.x += (look.tx - look.x) * .04; look.y += (look.ty - look.y) * .04;
   offset.x += (offset.tx - offset.x) * .08; offset.y += (offset.ty - offset.y) * .08;
@@ -2065,7 +2065,7 @@ function step(now){
   animateGuests(t); v15Tick(t);
   if (playing) platters.forEach(p => p.rotation.y -= .055);
   applyCamera(); placeOverlay();
-  frameN++; if (tweens.length ? frameN % 2 === 0 : frameN % 4 === 0) renderer.shadowMap.needsUpdate = true;
+  frameN++; { const se = perf.se || (mobile() ? 4 : 2); if (frameN % (tweens.length ? se : se * 2) === 0) renderer.shadowMap.needsUpdate = true; }
   // adaptive quality: ignore hitches (loading, tab switches), wait until things settle, and on phones give up
   // the expensive extras (lens, shadows) before ever lowering sharpness, which never drops below 1.5x there
   { const dtp = now - (perf.last || now); perf.last = now; if (dtp < 250 && now > (perf.t0 || (perf.t0 = now + 4000))){ perf.acc += dtp; perf.n++; } }
@@ -2073,7 +2073,7 @@ function step(now){
     perf.slow = avg > 28 ? (perf.slow || 0) + 1 : 0;
     if (perf.slow >= 2){ perf.slow = 0; const floor = mobile() ? 1.5 : 1;
       if (FX.on) FX.on = false;
-      else if (sun.castShadow && (mobile() || renderer.getPixelRatio() <= floor)) sun.castShadow = false;
+      else if ((perf.se || 0) < 8) perf.se = (perf.se || (mobile() ? 4 : 2)) * 2;
       else if (renderer.getPixelRatio() > floor) renderer.setPixelRatio(Math.max(floor, renderer.getPixelRatio() - .25)); } }
   renderFrame();
 }
@@ -2339,6 +2339,17 @@ document.addEventListener("keydown", ev => {
   applyLang(); bgmAutostart();
   { let lk = "c"; try { lk = new URLSearchParams(location.search).get("look") || "c"; } catch(e){} applyLook(lk); }
   Object.assign(cam, hallView());
+  // warm-up while the loading screen is still up: compile every shader and upload every texture now,
+  // so the stairs and the first look around the lobby don't stutter on phones
+  try {
+    renderer.compile(scene, camera);
+    const seen = new Set(); scene.traverse(o => { if (!o.isMesh) return; (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { if (!m) return; ["map", "bumpMap", "roughnessMap", "emissiveMap", "alphaMap"].forEach(k => { const t = m[k]; if (t && !seen.has(t)){ seen.add(t); try { renderer.initTexture(t); } catch(e){} } }); }); });
+    const keep = { pos: cam.pos.clone(), tgt: cam.tgt.clone(), fov: cam.fov, roll: cam.roll };
+    const views = [hallView(), { pos: V15(STAIR.top + .25, 1.62 + STAIR.n * STAIR.rise, 1.45), tgt: V15(STAIR.top + 3.25, 1.4 + STAIR.n * STAIR.rise * .6, 1.4), fov: 60, roll: 0 }];
+    [Math.PI / 2, -Math.PI / 2, Math.PI].forEach(a => { const v = hallView(); const d = new THREE.Vector3().subVectors(v.tgt, v.pos); d.applyAxisAngle(new THREE.Vector3(0, 1, 0), a); v.tgt = v.pos.clone().add(d); views.push(v); });
+    views.forEach(v => { Object.assign(cam, v); applyCamera(); renderer.shadowMap.needsUpdate = true; renderer.render(scene, camera); });
+    Object.assign(cam, keep); applyCamera();
+  } catch(e){ console.warn("warm-up skipped", e); }
   $("#loading").remove(); sceneReady = true;
   requestAnimationFrame(frame);
   const h = location.hash.slice(1);
@@ -4727,7 +4738,7 @@ function uprightPiano(){
   buildPianoKeys(g); PIANO.group = g;
   mesh(rbox(1.36, .07, .02, .006), body, g, 0, .79, .43, { rx: -.2 });           // fallboard
   // music sheet, brass pedals and a small lamp on top
-  { const sm = new THREE.MeshBasicMaterial({ map: musicSheetTexture(), side: THREE.DoubleSide }); sm.color.setRGB(.93, .9, .84); mesh(new THREE.PlaneGeometry(.46, .32), sm, g, .16, .955, .46, { rx: -.12, cast: false, receive: false }); }
+  { const sm = PIANO.sheetMat = new THREE.MeshBasicMaterial({ map: musicSheetTexture(false), side: THREE.DoubleSide }); sm.color.setRGB(.93, .9, .84); mesh(new THREE.PlaneGeometry(.46, .32), sm, g, .16, .955, .46, { rx: -.12, cast: false, receive: false }); }
   [-.1, 0, .1].forEach(x => mesh(box(.035, .015, .09), M.brass, g, x, .06, .45));
   mesh(new THREE.CylinderGeometry(.06, .07, .03, 18), M.brass, g, -.5, 1.29, .2);
   mesh(new THREE.CylinderGeometry(.008, .008, .26, 8), M.brass, g, -.5, 1.42, .2);
@@ -4963,12 +4974,7 @@ async function sitPiano(){
   await camTo(V, Math.min(1500, Math.max(700, cam.pos.distanceTo(V.pos) * 230)), ease.io, 0, .012);
   if (!pianoOn) return;
   camMode = "piano"; eggStep = 0; eggGlow();
-  const touch = matchMedia("(hover: none)").matches;
-  toast((touch
-    ? { ko: "<b>건반을 눌러 연주해 보세요</b>여러 손가락으로 화음도 칠 수 있어요", ja: "<b>鍵盤を押して弾いてみてください</b>複数の指で和音も弾けます", en: "<b>Tap the keys to play</b>Use several fingers for chords" }
-    : { ko: "<b>건반을 눌러 연주해 보세요</b>PC 키보드로도 칠 수 있어요<br>흰건반 · A S D F G H J K L ; '<br>검은건반 · W E T Y U O P<br>옥타브 내리기 · Z &nbsp; 올리기 · X",
-        ja: "<b>鍵盤を押して弾いてみてください</b>PCキーボードでも弾けます<br>白鍵 · A S D F G H J K L ; '<br>黒鍵 · W E T Y U O P<br>オクターブ下げ · Z &nbsp; 上げ · X",
-        en: "<b>Click the keys to play</b>You can also use your keyboard<br>White keys · A S D F G H J K L ; '<br>Black keys · W E T Y U O P<br>Octave down · Z &nbsp; up · X" })[state.lang], 5200, true);
+
 }
 async function standPiano(){
   if (!pianoOn || camMode === "tween") return;
@@ -5055,6 +5061,9 @@ function stairStep(i, n){
   html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
   button,a,#stage{-webkit-tap-highlight-color:transparent}
   #toast{width:max-content}
+  #welcome .wc-b{flex-direction:column!important;align-items:center!important;gap:10px!important}
+  #welcome .wc-main{flex:none!important;width:100%;max-width:300px;padding:16px 20px 15px!important;font-size:1.12rem!important}
+  #welcome .wc-ghost{font-size:1.2rem!important;padding:6px 10px!important;opacity:.85}
   #toast.low{top:auto!important;bottom:calc(92px + env(safe-area-inset-bottom,0px));transform:translate(-50%,0) scale(.96)!important}
   #toast.low.on{transform:translate(-50%,0) scale(1)!important}
   #toast b{white-space:normal}
@@ -5079,7 +5088,7 @@ function stairStep(i, n){
     #welcome h2{font-size:clamp(1.4rem,7.4vw,2rem)!important}
     #welcome h2 span{white-space:normal!important;display:inline!important}
     #welcome .wc-b{gap:8px}
-    #welcome .wc-main{font-size:.9rem!important;padding:13px 12px 12px!important;white-space:nowrap}
+    #welcome .wc-main{font-size:1.06rem!important;padding:15px 14px 14px!important;white-space:nowrap}
     #welcome .wc-ghost{font-size:1.25rem!important;padding:12px 6px!important;white-space:nowrap}
     #welcome .hint-t{font-size:1.45rem!important}
     #artistCard .ac{margin-top:14vh}
@@ -5095,7 +5104,7 @@ function stairStep(i, n){
 })();
 
 /* ---------- the music sheet on the piano: "Ye — Runaway", hand-scribbled (made-up notes, just for the look) ---------- */
-function musicSheetTexture(){
+function musicSheetTexture(withTitle){
   const c = cnv(2048, 1422, (g, W, H) => {
     g.scale(2048 / 1152, 1422 / 800); const w = 1152, h = 800;
     const r = rnd(808);
@@ -5104,8 +5113,10 @@ function musicSheetTexture(){
     // coffee ring
     g.strokeStyle = "rgba(140,90,40,.16)"; g.lineWidth = 9; g.beginPath(); g.arc(w * .86, h * .8, 62, 0, Math.PI * 1.7); g.stroke();
     // title, pencil-ish
-    g.fillStyle = "#2b2622"; g.textAlign = "center"; g.font = '700 64px "Caveat", "Nanum Pen Script", cursive'; g.fillText("Ye — Runaway", w / 2, 82);
-    g.font = '400 26px "Caveat", "Nanum Pen Script", cursive'; g.fillStyle = "rgba(43,38,34,.7)"; g.fillText("intro · piano", w / 2, 118);
+    if (withTitle){
+      g.fillStyle = "#2b2622"; g.textAlign = "center"; g.font = '700 64px "Caveat", "Nanum Pen Script", cursive'; g.fillText("Ye — Runaway", w / 2, 82);
+      g.font = '400 26px "Caveat", "Nanum Pen Script", cursive'; g.fillStyle = "rgba(43,38,34,.7)"; g.fillText("intro · piano", w / 2, 118);
+    } else { g.strokeStyle = "rgba(43,38,34,.35)"; g.lineWidth = 2; g.beginPath(); g.moveTo(w / 2 - 170, 86); g.lineTo(w / 2 + 170, 84); g.stroke(); g.fillStyle = "rgba(43,38,34,.45)"; g.textAlign = "center"; g.font = '400 30px "Caveat", "Nanum Pen Script", cursive'; g.fillText("? ? ?", w / 2, 72); }
     g.textAlign = "left"; g.font = '400 24px "Caveat", cursive'; g.fillText("♩ = 87", 70, 150);
     const ink = "rgba(30,26,22,.86)";
     const wob = (x0, y0, x1, y1) => { g.beginPath(); g.moveTo(x0, y0 + (r() - .5) * 1.4); const n = 6; for (let i = 1; i <= n; i++) g.lineTo(x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n + (r() - .5) * 1.6); g.stroke(); };
@@ -5213,7 +5224,7 @@ function pianoView(){
   // phones: a tighter view (F4…F6) so keys and the sheet are big enough to read and hit; wide screens: C4…E6
   const cx = -.648 + 22.5 * .036, P = portrait();
   const fov = P ? 60 : 50, aspect = innerWidth / Math.max(1, innerHeight);
-  const tanH = Math.tan(fov * Math.PI / 360) * aspect, dist = Math.max(P ? .5 : .8, (P ? .23 : .345) / tanH), tilt = P ? .42 : .46;
+  const tanH = Math.tan(fov * Math.PI / 360) * aspect, dist = Math.max(P ? .5 : .8, (P ? .32 : .345) / tanH), tilt = P ? .42 : .46;
   const base = P ? .84 : .86;
   return { pos: pianoLocal(cx, base + dist * Math.sin(tilt), .5 + dist * Math.cos(tilt)), tgt: pianoLocal(cx, P ? .86 : .88, .5), fov, roll: 0 };
 }
@@ -5223,6 +5234,7 @@ addEventListener("resize", () => { if (pianoOn && camMode === "piano") Object.as
 var EGGP = { a: null, on: false };
 function eggFire(){
   if (EGGP.on) return;
+  if (PIANO.sheetMat && !PIANO.titled){ PIANO.titled = true; setTimeout(() => { const old = PIANO.sheetMat.map; PIANO.sheetMat.map = musicSheetTexture(true); PIANO.sheetMat.needsUpdate = true; if (old) old.dispose(); }, 700); }
   { const tt = $("#toast"); if (tt) tt.classList.remove("on"); }
   // 1) the keyboard ripples once, low to high
   const ks = Object.keys(PIANO.keys).map(Number).filter(m => m >= 60 && m <= 88).sort((a, b) => a - b);
