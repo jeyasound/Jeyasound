@@ -315,6 +315,9 @@ p{margin:0}
   *,*::before,*::after{transition-duration:.01ms!important;animation:none!important}
 }
 
+.quick .pick-l{font-size:.74rem!important}
+.quick button{font-size:.98rem!important;padding:8px 14px!important}
+@media (max-width:820px){.quick button{font-size:1rem!important;padding:10px 16px!important}.quick .pick-l{font-size:.76rem!important}}
 .lp-logo{width:36px;height:38px;margin:-4px 0;flex:none;filter:drop-shadow(0 1px 6px rgba(20,12,6,.45))}
 .lp-logo .lp-disc{transform-box:fill-box;transform-origin:50% 50%}
 .room-playing .lp-logo .lp-disc,.brand:hover .lp-disc{animation:lpspin 2.4s linear infinite}
@@ -1678,7 +1681,7 @@ let loungeLamp;
    ========================================================= */
 let labels = [], hemi, fill, inLights = [], view = "seated", busy = false;
 const DOOR_OPEN = -1.6;
-const Q = (() => { const lite = mobile() || (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 4; return { lite, pr: Math.min(devicePixelRatio || 1, lite ? 1.25 : 1.5), shadow: lite ? 1024 : 2048 }; })();
+const Q = (() => { const lite = mobile() || (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 4; return { lite, pr: Math.min(devicePixelRatio || 1, mobile() ? 2 : (lite ? 1.25 : 1.5)), shadow: lite ? 1024 : 2048 }; })();
 function initThree(){
   renderer = new THREE.WebGLRenderer({ antialias: !Q.lite || (devicePixelRatio || 1) < 2, powerPreference: "high-performance" });
   renderer.setPixelRatio(Q.pr);
@@ -1980,7 +1983,7 @@ stage.addEventListener("pointerdown", ev => { if (sceneReady && canLook()){ drag
 addEventListener("pointermove", ev => {
   if (!renderer || !camera || !sceneReady) return;
   if (ev.pointerType === "mouse" && !drag){ look.tx = (ev.clientX / innerWidth - .5) * 2; look.ty = (ev.clientY / innerHeight - .5) * 2; }
-  if (drag){ const dx = ev.clientX - drag.x, dy = ev.clientY - drag.y; if (Math.hypot(dx, dy) > 6){ dragMoved = true; stage.classList.add("dragging"); } if (dragMoved){ const k = ev.pointerType === "mouse" ? .0042 : .006; hallLook.tyaw = drag.yaw - dx * k; hallLook.tpitch = Math.max(-.55, Math.min(.45, drag.pitch - dy * k * .8)); } return; }
+  if (drag){ const dx = ev.clientX - drag.x, dy = ev.clientY - drag.y; if (Math.hypot(dx, dy) > 6){ dragMoved = true; stage.classList.add("dragging"); } if (dragMoved){ const k = ev.pointerType === "mouse" ? .0042 : Math.PI / Math.max(320, innerWidth); hallLook.tyaw = drag.yaw - dx * k; hallLook.tpitch = Math.max(-.55, Math.min(.45, drag.pitch - dy * k * .8)); } return; }
   const tip = $("#tip");
   if (ev.target !== renderer.domElement){ if (state.mode === "hall") hoverRoom(null); tip.classList.remove("on"); return; }
   if (state.mode === "hall"){ const h = camMode === "hall" && !atDesk ? pick(ev, pickables) : null; hoverRoom(h ? (h.object.userData.room || null) : null); if (h && (h.object.userData.guide || h.object.userData.disco || h.object.userData.artist != null || h.object.userData.tv || h.object.userData.piano)) stage.classList.add("pointing"); }
@@ -2062,7 +2065,7 @@ function step(now){
   animateGuests(t); v15Tick(t);
   if (playing) platters.forEach(p => p.rotation.y -= .055);
   applyCamera(); placeOverlay();
-  frameN++; if (tweens.length || frameN % 3 === 0) renderer.shadowMap.needsUpdate = true;
+  frameN++; if (tweens.length ? frameN % 2 === 0 : frameN % 4 === 0) renderer.shadowMap.needsUpdate = true;
   perf.acc += now - (perf.last || now); perf.last = now; perf.n++;
   if (perf.n >= 90){ const avg = perf.acc / perf.n; perf.acc = 0; perf.n = 0;
     if (avg > 26 && FX.on){ FX.on = false; } else if (avg > 27 && renderer.getPixelRatio() > 1){ renderer.setPixelRatio(Math.max(1, renderer.getPixelRatio() - .25)); }
@@ -2375,7 +2378,7 @@ let sceneReady = false;
    ========================================================= */
 const CZ = 2.9, CH = 3.5;
 const XE = LOFT.x0 + 7.5;                            // back wall of the lobby: all three studio doors face the entrance
-const ZL = 1.45 - 8.2, ZR = 1.45 + 8.2;              // lobby side walls (16.4 m wide); entrance centred at z = 1.45
+const ZL = 1.45 - 9.1, ZR = 1.45 + 8.2;              // lobby side walls (16.4 m wide); entrance centred at z = 1.45
 const DESK = { x: LOFT.x0 + 2.2, z: 1.45 - 3.0 };    // stem-guide sign, front left
 const DOOR_AJAR = 0;                              // JEYA's door stands a little open
 // rooms side by side behind the back wall, fronts facing the entrance (-x); doors at z = 1.45 ± 4.9; JEYA in the middle
@@ -2608,7 +2611,9 @@ function buildCorridorExtras(){
     } else { rec.frames = new THREE.Group(); rec.g.add(rec.frames); [0, 1].forEach(k => frameOn(rec.frames, -.95 + k * .7, 1.1, zf, .42, .52, artTexture(k + rec.R.i))); }
     buildLookExtras(rec);
   });
-  applyBasementRoom(); guideToActiveRoom(); furnishLobby(); buildArtists();
+  applyBasementRoom(); guideToActiveRoom();
+  { const n0 = scene.children.length; furnishLobby(); buildArtists(); markLobbyOnly(n0); }
+  trimShadowCasters();
 }
 
 /* ---------- views & flow (first person) ---------- */
@@ -2784,8 +2789,9 @@ function petDog(rec){
 let _v15t = 0;
 function v15Tick(t){
   const dt = Math.min(.05, Math.max(0, t - _v15t)); _v15t = t;
-  walkTick(t, dt); doorProximity(t); artistTick(t, dt); drawTV(t); tickClock();
-  guideTick(t);
+  lobbyVisibility();
+  eggGlowTick(t);
+  if (!lobbyHidden){ walkTick(t, dt); doorProximity(t); artistTick(t, dt); drawTV(t); tickClock(); guideTick(t); }
   roomObjs.forEach(r => {
     if (r.person){
       // now and then the engineer glances back at you
@@ -2804,7 +2810,7 @@ function v15Tick(t){
 function buildPicker(){
   buildLooksUI(); bgmUI();
   const box = $("#pickEng"); if (!box) return;
-  box.innerHTML = `<span class="pick-l">${esc(L().pickLbl)}</span>` + ENGINEERS.map((e, i) => `<button type="button" data-room="${e.id}" class="${e.status === "active" ? "" : "soon"}" aria-label="${esc(e.status === "active" ? e.name : e.room + " · " + L().hiring)}">${esc(e.status === "active" ? e.name : String(i + 1))}</button>`).join("");
+  box.innerHTML = ENGINEERS.map((e, i) => `<button type="button" data-room="${e.id}" class="${e.status === "active" ? "" : "soon"}" aria-label="${esc(e.status === "active" ? e.name : e.room + " · " + L().hiring)}">${esc(e.status === "active" ? e.name : String(i + 1))}</button>`).join("");
   box.querySelectorAll("[data-room]").forEach(b => { b.onclick = () => { if (state.mode === "hall" && camMode === "hall") enterRoom(b.dataset.room); }; b.onmouseenter = () => state.mode === "hall" && hoverRoom(roomObjs.find(r => r.e.id === b.dataset.room)); b.onmouseleave = () => state.mode === "hall" && hoverRoom(null); });
   if (!$("#v15lbl")){ const st = document.createElement("style"); st.id = "v15lbl"; st.textContent = ".label3d:not(.desk-l){display:none!important}.desk-l .lb{transform:translate(-50%,-50%)!important;background:#a8352b!important;color:#fff4ea!important;border:0!important;box-shadow:0 8px 22px rgba(0,0,0,.45)!important}.desk-l .lb small{color:rgba(255,236,220,.8)!important}"; document.head.appendChild(st); }
   if (deskLabel) deskLabel.remove(); deskLabel = null;
@@ -2812,7 +2818,7 @@ function buildPicker(){
   const T = { ko: ["JEYA 방 들어가기", "믹싱 예약하기"], ja: ["JEYAの部屋に入る", "ミックスを予約"], en: ["Enter JEYA's room", "Book a mix"] }[state.lang] || [];
   const TD = { ko: "디스코그래피", ja: "ディスコグラフィ", en: "Discography" }[state.lang];
   const TG = { ko: "스템 보내기 전 확인", ja: "ステム送付前の確認", en: "Before you send stems" }[state.lang];
-  [["room", T[0], () => enterRoom(ENGINEERS.find(e => e.status === "active").id)], ["piano", { ko: "앉아서 피아노 치기", ja: "座ってピアノを弾く", en: "Sit & play the piano" }[state.lang], () => sitPiano()]].forEach(([key, text, act]) => {
+  [["room", T[0], () => enterRoom(ENGINEERS.find(e => e.status === "active").id)]].forEach(([key, text, act]) => {
     const el = document.createElement("button"); el.type = "button"; el.className = "hs lobby-hs";
     el.innerHTML = `<i></i><span>${esc(text)}</span>`; el.setAttribute("aria-label", text);
     el.onclick = () => { if (state.mode === "hall" && camMode === "hall" && !atDesk && !panelOpen) act(); };
@@ -3041,9 +3047,9 @@ function buildLookExtras(rec){
   // C — wheat-pasted posters in place of the framed gallery
   L0.c = new THREE.Group(); rec.g.add(L0.c);
   // the client's chosen album covers, pasted up like posters (square, torn edges, a little paper wear)
-  const PS = .58, GAP = .07;
+  const PS = .56, GAP = .06;
   for (let k = 0; k < 3; k++){
-    const disc = (ENGINEERS.find(e => e.status === "active") || {}).discography || [], idx = (k + rec.R.i * 3) % Math.max(1, disc.length), x = -.12 - (2 - k) * (PS + GAP);
+    const disc = (ENGINEERS.find(e => e.status === "active") || {}).discography || [], idx = (k + rec.R.i * 3) % Math.max(1, disc.length), x = .22 - (2 - k) * (PS + GAP);      // clear of the narrow front window (x -2.06…-1.56)
     if (!disc.length) continue;
     const pm = mesh(new THREE.PlaneGeometry(PS, PS), mat({ map: discoPoster(disc[idx], idx), roughness: .75 }), L0.c, x, 1.3, z + .004, { cast: false });
 
@@ -3292,6 +3298,7 @@ function buildStairwell(){
 }
 async function walkDownStairs(ms){
   const x0 = STAIR.top + .25, x1 = LOFT.x0 - .9, z = 1.45, steps = STAIR.n + 2;
+  // footsteps on the wooden stairs, one per step, in time with the head bob
   return tween(ms, k => {
     const x = x0 + (x1 - x0) * k, base = stairY(x + .12) * .65 + stairY(x - .12) * .35;
     cam.pos.set(x, 1.62 + base + Math.abs(Math.sin(k * Math.PI * steps)) * .02, z + Math.sin(k * Math.PI * 2) * .03);
@@ -3700,7 +3707,7 @@ function setGrow(v){
     return false; };
   panel.addEventListener("wheel", ev => { if (feed(ev.deltaY)) ev.preventDefault(); }, { passive: false });
   panel.addEventListener("touchstart", ev => { ty = ev.touches[0].clientY; }, { passive: true });
-  panel.addEventListener("touchmove", ev => { if (ty == null) return; const y = ev.touches[0].clientY, d = (ty - y) * 1.6; ty = y; if (feed(d)) ev.preventDefault(); }, { passive: false });
+  panel.addEventListener("touchmove", ev => { if (ty == null) return; const y = ev.touches[0].clientY, d = (ty - y) * 3.2; ty = y; if (feed(d)) ev.preventDefault(); }, { passive: false });
   panel.addEventListener("touchend", () => ty = null);
 })();
 
@@ -3839,6 +3846,15 @@ function goldRecord(parent, x, y, z, ry, d, k){
   #acts button .lbl{position:relative;white-space:nowrap}
   #acts button:hover,#acts button:focus-visible{--y:-3px;transform:rotate(calc(var(--r,0deg) * -1)) translateY(-3px) scale(1.06);filter:drop-shadow(0 7px 6px rgba(0,0,0,.5))}
   #acts button:active{transform:rotate(0) scale(.96)}
+  #acts .menu-t{position:relative;display:block!important;padding:9px 18px 8px!important;background:transparent!important;color:#1f2f5a!important;font-family:"Nanum Pen Script","Caveat",cursive!important;font-size:1.45rem!important;line-height:1.05;border:0!important;filter:drop-shadow(0 3px 3px rgba(0,0,0,.45));transform:rotate(var(--r,0deg));transition:transform .25s cubic-bezier(.3,1.6,.5,1)}
+  #acts .menu-t .scrap{position:absolute;inset:0;z-index:-1;background-color:#f3e7c4;clip-path:var(--tear);background-image:radial-gradient(120% 90% at 20% 0,rgba(255,255,255,.4),transparent 60%)}
+  #acts .menu-t .tape{position:absolute;left:50%;top:-7px;width:30px;height:12px;margin-left:-15px;background:rgba(232,140,122,.75);transform:rotate(var(--tr,-4deg));clip-path:polygon(0 15%,8% 0,92% 10%,100% 0,96% 100%,88% 85%,10% 100%,3% 88%)}
+  #acts .menu-t:hover{transform:rotate(2deg) scale(1.06)}
+  #acts .menu-t .lbl{position:relative;white-space:nowrap}
+  #acts:not(.open) button[data-act]{display:none!important}
+  #acts.open button[data-act]{animation:unfold .35s cubic-bezier(.3,1.5,.5,1) both!important;animation-delay:calc(var(--i) * 55ms)!important}
+  @media (max-width:640px){#acts.open{flex-direction:column!important;align-items:center!important;gap:8px!important;overflow:visible!important}#acts.open button[data-act]{font-size:1.15rem!important;padding:9px 18px 8px!important}#acts .menu-t{font-size:1.3rem!important}}
+  @keyframes unfold{0%{opacity:0;transform:translateX(-14px) rotate(-8deg) scale(.7)}100%{opacity:1;transform:rotate(var(--r,0deg))}}
   @keyframes wiggle{0%,100%{transform:rotate(var(--r,0deg))}30%{transform:rotate(calc(var(--r,0deg) + 4deg))}60%{transform:rotate(calc(var(--r,0deg) - 3deg))}}
   .acts-on #acts button{animation:wiggle .6s ease-in-out both;animation-delay:calc(var(--i) * 90ms + .2s)}
   #acts button:hover{animation:none}
@@ -3861,8 +3877,24 @@ function tearPath(seed){
       const txt = b.textContent; b.innerHTML = `<span class="scrap"></span><span class="tape"></span><span class="lbl">${esc(txt)}</span>`;
       b.style.setProperty("--r", rot[i % 5] + "deg"); b.style.setProperty("--tr", tr[i % 5] + "deg"); b.style.setProperty("--i", i);
       b.style.setProperty("--tear", tearPath(77 + i * 13));
+      b.addEventListener("click", () => setActsOpen(false));
     });
+    const box = $("#acts"), mt = document.createElement("button"); mt.type = "button"; mt.className = "menu-t"; mt.setAttribute("aria-expanded", "false");
+    mt.innerHTML = `<span class="scrap"></span><span class="tape"></span><span class="lbl"></span>`;
+    mt.style.setProperty("--r", "-2deg"); mt.style.setProperty("--tr", "-5deg"); mt.style.setProperty("--tear", tearPath(53));
+    mt.onclick = ev => { ev.stopPropagation(); setActsOpen(!box.classList.contains("open")); };
+    box.prepend(mt); setActsOpen(false);
   };
+}
+function setActsOpen(on){
+  const box = $("#acts"); if (!box) return; box.classList.toggle("open", on);
+  if (on){ const lh = $("#lookHint"); if (lh) lh.classList.remove("on"); }
+  const mt = box.querySelector(".menu-t"); if (!mt) return;
+  mt.setAttribute("aria-expanded", on ? "true" : "false");
+  mt.querySelector(".lbl").textContent = on ? ({ ko: "접기 ✕", ja: "閉じる ✕", en: "Close ✕" }[state.lang]) : ({ ko: "메뉴 ☰", ja: "メニュー ☰", en: "Menu ☰" }[state.lang]);
+}
+addEventListener("pointerdown", ev => { const box = $("#acts"); if (box && box.classList.contains("open") && !box.contains(ev.target)) setActsOpen(false); }, true);
+{
 }
 
 /* ---------- real Before / After playback: both files run in sync, the switch is a 40 ms crossfade ---------- */
@@ -3974,7 +4006,8 @@ function bgmTick(){
     }
   }
   if (BAP.cur || view === "wearing") g = 0;
-  if (pianoOn) g *= .22;                               // sitting at the piano: the lobby music steps way back             // headphones on (or Before / After playing): the lobby music fades away
+  if (pianoOn) g *= .22;
+  if (window.EGGP && EGGP.on) g = 0;                               // sitting at the piano: the lobby music steps way back             // headphones on (or Before / After playing): the lobby music fades away
   const t = BGM.g.context.currentTime;
   BGM.g.gain.setTargetAtTime(g * BGM_LEVEL, t, g === 0 ? .35 : .3); BGM.lp.frequency.setTargetAtTime(f, t, .3);
   // the speaker cones breathe with the music
@@ -4099,14 +4132,17 @@ function hangingPlant(x, z){
   [0, 1, 2].forEach(i => { const a = i * 2.09; mesh(new THREE.CylinderGeometry(.003, .003, .62, 4), M.black, g, Math.cos(a) * .07, -.3, Math.sin(a) * .07, { cast: false, rz: Math.cos(a) * .12, rx: -Math.sin(a) * .12 }); });
   mesh(new THREE.CylinderGeometry(.15, .1, .16, 20), M.terracotta, g, 0, -.68, 0);
   const vm = M.vine = M.vine || mat({ color: 0x5b8a46, roughness: .6, side: THREE.DoubleSide }), r = rnd(Math.round(x * 31 + z * 17));
+  const leaves = [];
   for (let i = 0; i < 9; i++){
     const a = i / 9 * Math.PI * 2, len = .35 + r() * .75;
     for (let k = 0; k < len / .07; k++){
       const yy = -.62 - k * .07, rr = .12 + Math.min(k, 3) * .02;
-      const lf = mesh(new THREE.CircleGeometry(.032 + r() * .012, 6), vm, g, Math.cos(a) * rr + (r() - .5) * .03, yy, Math.sin(a) * rr + (r() - .5) * .03, { cast: false });
-      lf.rotation.set(r() * 3, r() * 3, 0);
+      leaves.push([Math.cos(a) * rr + (r() - .5) * .03, yy, Math.sin(a) * rr + (r() - .5) * .03, r() * 3, r() * 3, (.032 + r() * .012) / .038]);
     }
   }
+  const im = new THREE.InstancedMesh(M.leafGeo = M.leafGeo || new THREE.CircleGeometry(.038, 6), vm, leaves.length), d = new THREE.Object3D();
+  leaves.forEach((q, n) => { d.position.set(q[0], q[1], q[2]); d.rotation.set(q[3], q[4], 0); d.scale.setScalar(q[5]); d.updateMatrix(); im.setMatrixAt(n, d.matrix); });
+  im.castShadow = false; im.receiveShadow = true; g.add(im);
   return g;
 }
 function lobbyPendant(x, z, y = CH - .9){
@@ -4265,8 +4301,12 @@ function artistTick(t, dt){
   if (hall){
     let best = null, bd = 9;
     artistFigs.forEach(a => { const d = Math.hypot(a.g.position.x - PLAYER.pos.x, a.g.position.z - PLAYER.pos.z); if (d < bd){ bd = d; best = a; } });
-    if (engaged && Math.hypot(engaged.g.position.x - PLAYER.pos.x, engaged.g.position.z - PLAYER.pos.z) > 2.9) engaged = null;
-    if (!engaged && best && bd < 2.3) engaged = best;
+    const ed = engaged ? Math.hypot(engaged.g.position.x - PLAYER.pos.x, engaged.g.position.z - PLAYER.pos.z) : 99;
+    if (ed > 3.0) engaged = null;
+    // always talk to whoever is closest once you're near (switch if someone else is clearly nearer)
+    if (best && bd < 2.5 && (!engaged || (best !== engaged && bd < ed - .35))) engaged = best;
+    // anyone you walk up to stops wandering and waits for you
+    artistFigs.forEach(a => { if (a.mode === "walk" && Math.hypot(a.g.position.x - PLAYER.pos.x, a.g.position.z - PLAYER.pos.z) < 3.2){ a.mode = "idle"; a.timer = 4; a.goal = null; } });
   } else engaged = null;
   artistFigs.forEach((a, n) => {
     const p = a.g.position, f = a.f, me = a === engaged;
@@ -4339,9 +4379,10 @@ function placeBubbles(){
       const key = lang + txt;
       if (b._k !== key){ b._k = key; b.innerHTML = `<small>${esc(d.name || "")}</small>${esc(txt)}<em>${esc(more)}</em>`; }
       _bv.set(a.g.position.x, 1.72, a.g.position.z).project(camera);
-      if (_bv.z > 1 || Math.abs(_bv.x) > 1.1 || Math.abs(_bv.y) > 1.1){ b.classList.remove("on"); return; }
+      if (_bv.z > 1){ b.classList.remove("on"); return; }                       // behind you: no bubble
+      _bv.x = Math.max(-.92, Math.min(.92, _bv.x)); _bv.y = Math.max(-.6, Math.min(.85, _bv.y));   // near the edge: keep the bubble on screen
       const x = (_bv.x + 1) / 2 * innerWidth, y = (1 - _bv.y) / 2 * innerHeight;
-      b.style.transform = `translate(${Math.min(innerWidth - 260, Math.max(8, x - 14)).toFixed(1)}px,${Math.max(8, y - b.offsetHeight - 12).toFixed(1)}px)`;
+      b.style.transform = `translate(${Math.min(innerWidth - b.offsetWidth - 8, Math.max(8, x - 14)).toFixed(1)}px,${Math.max(72, y - b.offsetHeight - 12).toFixed(1)}px)`;
     }
     b.classList.toggle("on", on);
   });
@@ -4382,7 +4423,8 @@ const ARROWS = { ArrowUp: 1, ArrowDown: 1, ArrowLeft: 1, ArrowRight: 1 };
 addEventListener("keydown", ev => {
   if (!ARROWS[ev.key] || state.mode !== "hall") return;
   const tg = ev.target; if (tg && tg.closest && tg.closest("input,textarea,select,[contenteditable]")) return;
-  if (!lobbyFree()) return;
+  if (overlayUp()){ ev.preventDefault(); closeWelcome(); hasWalked = true; keyGate = true; return; }
+  if (keyGate || !lobbyFree()) return;
   PLAYER.keys[ev.key] = true; ev.preventDefault(); walked();
 });
 addEventListener("keyup", ev => { PLAYER.keys[ev.key] = false; });
@@ -4460,7 +4502,7 @@ function showWelcome(){
               ja: ["JEYA SOUND · MIX & MASTER", "<span>ミックスを任せる</span><br><span><u>エンジニアを選んで</u>ください</span>", "曲を送っていただければ、いい音に仕上げます。", "依頼する", "見て回る"],
               en: ["JEYA SOUND · MIX & MASTER", "<u>Pick the engineer</u><br>for your mix", "Send us your song — we'll send back a great-sounding record.", "Request a mix", "Look around"] }[lang] || [];
   el.className = ""; el.setAttribute("aria-label", T[1].replace(/<[^>]+>/g, " "));
-  el.innerHTML = paper(`<div class="wc-k">${esc(T[0])}</div><h2>${T[1]}</h2><p>${esc(T[2])}</p><div class="wc-b"><button type="button" class="wc-main">${esc(T[3])} →</button><button type="button" class="wc-ghost">${esc(T[4])}</button></div>`, 311);
+  el.innerHTML = paper(`<div class="wc-k">${esc(T[0])}</div><h2 style="margin-bottom:20px">${T[1]}</h2><div class="wc-b"><button type="button" class="wc-main">${esc(T[3])} →</button><button type="button" class="wc-ghost">${esc(T[4])}</button></div>`, 311);
   el.querySelector(".wc-main").onclick = () => { closeWelcome(); requestMix(); };
   el.querySelector(".wc-ghost").onclick = () => showMoveHint();
   document.body.classList.add("welcome-on");
@@ -4474,14 +4516,14 @@ function requestMix(){
 let moveHintT = 0;
 function showMoveHint(){
   const el = welcomeEl(), touch = matchMedia("(hover: none)").matches, lang = state.lang;
-  const T = touch ? { ko: ["바닥을 터치하면<br>그곳으로 걸어가요", "화면을 밀어서 로비를 둘러보세요"], ja: ["床をタップすると<br>そこへ歩きます", "スワイプでロビーを見回せます"], en: ["Tap the floor<br>to walk there", "Swipe to look around the lobby"] }
-                  : { ko: ["바닥을 클릭하거나<br>방향키로 걸어 다녀요", "드래그해서 로비를 둘러보세요"], ja: ["床をクリック、または<br>矢印キーで歩けます", "ドラッグでロビーを見回せます"], en: ["Click the floor or use<br>the arrow keys to walk", "Drag to look around the lobby"] };
+  const T = touch ? { ko: ["화면을 밀어서<br>360° 둘러보세요", "바닥을 터치하면 그곳으로 걸어가요"], ja: ["スワイプして<br>360°見回せます", "床をタップするとそこへ歩きます"], en: ["Swipe to look<br>around 360°", "Tap the floor to walk there"] }
+                  : { ko: ["드래그해서<br>360° 둘러보세요", "바닥을 클릭하거나 방향키로 걸어 다녀요"], ja: ["ドラッグして<br>360°見回せます", "床をクリック、または矢印キーで歩けます"], en: ["Drag to look<br>around 360°", "Click the floor or use the arrow keys to walk"] };
   el.classList.remove("on");
   setTimeout(() => {
-    const H = T[lang] || T.ko; el.className = "hint"; el.innerHTML = paper(`<div class="hint-t">${H[0]}<small>${esc(H[1])}</small></div>`, 517);
+    const H = T[lang] || T.ko; el.className = "hint"; el.innerHTML = paper(`<div class="d360"><b></b><i></i></div><div class="hint-t">${H[0]}<small>${esc(H[1])}</small></div>`, 517);
     requestAnimationFrame(() => el.classList.add("on"));
     document.body.classList.remove("welcome-on"); document.body.classList.add("wc-hint-on");
-    clearTimeout(moveHintT); moveHintT = setTimeout(closeWelcome, 4200);
+    clearTimeout(moveHintT);
   }, 260);
 }
 let welcomeGone = false;
@@ -4556,16 +4598,17 @@ function retroTV(){
   const W = 2.0, H = 1.125, my = 1.62;
   mesh(rbox(W + .06, H + .06, .05, .01), mat({ color: 0x0b0a09, roughness: .35, metalness: .2 }), g, 0, my, .04);
   mesh(box(.3, .2, .02), M.blackMetal, g, 0, my, .01);
-  const c = document.createElement("canvas"); c.width = 640; c.height = 360; const sTex = tex(c);
+  const c = document.createElement("canvas"); c.width = 384; c.height = 216; const sTex = tex(c);
   const scr = new THREE.MeshBasicMaterial({ map: sTex, toneMapped: false });
   mesh(new THREE.PlaneGeometry(W, H), scr, g, 0, my, .067, { cast: false, receive: false });
-  const glow = new THREE.PointLight(0xc8a0ff, .5, 3.2, 2); glow.position.set(-5.0, 1.5, ZL + 1.0); scene.add(glow);
+  const glow = { intensity: 0 };
   const hit = new THREE.Mesh(box(W + .1, H + .1, .3), M.hit); hit.position.set(-5.0, my, ZL + .15); hit.userData.tv = true; scene.add(hit); pickables.push(hit);
   tvScreen = { c, t: sTex, glow, last: 0, crowd: Array.from({ length: 22 }, (_, i) => ({ x: i / 21, s: .75 + Math.random() * .5, p: Math.random() * 6 })) };
 }
 function drawTV(t){
-  if (!tvScreen || t - tvScreen.last < .066) return; tvScreen.last = t;
-  const { c, crowd } = tvScreen, g = c.getContext("2d"), w = c.width, h = c.height, beat = t * Math.PI * 2 * (88 / 60);
+  if (!tvScreen || state.mode !== "hall" || t - tvScreen.last < .1) return; tvScreen.last = t;
+  const { c, crowd } = tvScreen, g = c.getContext("2d"), w = 640, h = 360, beat = t * Math.PI * 2 * (88 / 60);
+  g.setTransform(c.width / 640, 0, 0, c.height / 360, 0, 0);
   // stage: deep purple haze
   const bg = g.createLinearGradient(0, 0, 0, h); bg.addColorStop(0, "#1a0f2e"); bg.addColorStop(.7, "#2e1530"); bg.addColorStop(1, "#120a10"); g.fillStyle = bg; g.fillRect(0, 0, w, h);
   // moving spotlights
@@ -4609,7 +4652,9 @@ function coffeeBar(){
   const brass = M.brass, wood = M.walnut, dark = mat({ color: 0x3a2416, roughness: .6 });
   mesh(rbox(2.5, .96, .6, .02), wood, g, 0, .48, .3);
   // fluted front panel
-  for (let i = 0; i < 31; i++) mesh(new THREE.CylinderGeometry(.032, .032, .8, 10), dark, g, -1.2 + i * .08, .46, .6);
+  { const im = new THREE.InstancedMesh(new THREE.CylinderGeometry(.032, .032, .8, 10), dark, 31), d = new THREE.Object3D();
+    for (let i = 0; i < 31; i++){ d.position.set(-1.2 + i * .08, .46, .6); d.updateMatrix(); im.setMatrixAt(i, d.matrix); }
+    im.castShadow = false; im.receiveShadow = true; g.add(im); }
   mesh(box(2.5, .025, .03), brass, g, 0, .06, .62);                                                  // brass foot rail
   mesh(rbox(2.6, .045, .66, .01), mat({ color: 0x2d2a27, roughness: .25, metalness: .1 }), g, 0, .98, .31); // dark stone top
   // lever espresso machine: copper/brass dome, eagle-less, two group heads with levers
@@ -4663,7 +4708,6 @@ function coffeeBar(){
     mesh(new THREE.CylinderGeometry(.004, .004, CH - 2.25, 6), M.black, scene, wx, (CH + 2.25)/2, wz, { cast: false });
     mesh(new THREE.ConeGeometry(.14, .16, 24, 1, true), mat({ color: 0x2a3a2e, roughness: .5, side: THREE.DoubleSide }), scene, wx, 2.2, wz, { cast: false });
     mesh(new THREE.SphereGeometry(.05, 12, 10), M.globe, scene, wx, 2.13, wz, { cast: false }); });
-  const pl = new THREE.PointLight(0xffb878, .9, 3.5, 1.8); pl.position.set(-5.1, 2.0, ZR - .7); scene.add(pl);
 }
 function uprightPiano(){
   // right wall, next to the coffee bar (faces -z)
@@ -4678,7 +4722,7 @@ function uprightPiano(){
   buildPianoKeys(g); PIANO.group = g;
   mesh(rbox(1.36, .07, .02, .006), body, g, 0, .79, .43, { rx: -.2 });           // fallboard
   // music sheet, brass pedals and a small lamp on top
-  mesh(new THREE.PlaneGeometry(.42, .3), mat({ color: 0xf1e9d8, roughness: .9, side: THREE.DoubleSide }), g, 0, .95, .43, { rx: -.15, cast: false });
+  { const sm = new THREE.MeshBasicMaterial({ map: musicSheetTexture(), side: THREE.DoubleSide }); sm.color.setRGB(.93, .9, .84); mesh(new THREE.PlaneGeometry(.46, .32), sm, g, .16, .955, .43, { rx: -.15, cast: false, receive: false }); }
   [-.1, 0, .1].forEach(x => mesh(box(.035, .015, .09), M.brass, g, x, .06, .45));
   mesh(new THREE.CylinderGeometry(.06, .07, .03, 18), M.brass, g, -.5, 1.29, .2);
   mesh(new THREE.CylinderGeometry(.008, .008, .26, 8), M.brass, g, -.5, 1.42, .2);
@@ -4688,7 +4732,6 @@ function uprightPiano(){
   const b = new THREE.Group(); b.position.set(0, 0, 1.0); g.add(b);
   mesh(rbox(.86, .07, .36, .02), M.leather, b, 0, .5, 0);
   [-1, 1].forEach(sx => [-1, 1].forEach(sz => mesh(new THREE.CylinderGeometry(.022, .018, .47, 10), body, b, sx * .38, .235, sz * .14)));
-  const pl = new THREE.PointLight(0xffc488, .45, 2.2, 2); pl.position.set(-2.15, 1.5, ZR - .5); scene.add(pl);
   const hit = new THREE.Mesh(box(1.6, 1.4, 1.5), M.hit); hit.position.set(-2.65, .7, ZR - .7); hit.userData.piano = true; scene.add(hit); pickables.push(hit);
 }
 function wallClock(){
@@ -4730,7 +4773,20 @@ function wallCalendar(){
   mesh(new THREE.CylinderGeometry(.008, .008, .02, 8), M.black, g, 0, .34, .01, { rx: Math.PI/2 });
 }
 addEventListener("keydown", ev => { if (ev.key === "Escape" && welcomeOpen()) closeWelcome(); });
-addEventListener("pointerdown", ev => { if (welcomeOpen() && renderer && ev.target === renderer.domElement) closeWelcome(); }, true);
+// while the welcome card or the look-around note is up: drag freely to look around; the first plain click only closes the note
+let keyGate = false;
+addEventListener("keyup", ev => { if (ARROWS[ev.key]) keyGate = false; });
+const moveHintOpen = () => { const el = $("#welcome"); return !!(el && el.classList.contains("on") && el.classList.contains("hint")); };
+const overlayUp = () => welcomeOpen() || moveHintOpen();
+let gateDown = false;
+addEventListener("pointerdown", ev => { gateDown = !!(overlayUp() && renderer && ev.target === renderer.domElement); }, true);
+window.addEventListener("pointerup", ev => {
+  if (!gateDown) return; gateDown = false;
+  if (dragMoved) return;                                   // that was a look-around drag: keep the note, let the drag finish normally
+  ev.stopImmediatePropagation();                           // a plain click: close the note and do nothing else
+  drag = null; $("#stage").classList.remove("dragging"); setTimeout(() => dragMoved = false, 0);
+  closeWelcome(); hasWalked = true;
+}, true);
 
 // open an outside link in a new tab; inside a sandboxed preview that blocks new tabs, fall back to this tab, then to copying the link
 function openExternal(url){
@@ -4768,10 +4824,10 @@ function buildPianoKeys(g){
   for (let i = 0; i < N; i++){
     const midi = 36 + 12 * Math.floor(i / 7) + WOFF[i % 7];
     const k = mesh(box(kw - .003, .02, .15), wm, g, x0 + (i + .5) * kw, .725, .55);
-    PIANO.keys[midi] = { m: k, y: .725 };
+    PIANO.keys[midi] = { m: k, y: .725 }; k.userData.midi = midi; k.castShadow = false;
     if ([0, 1, 3, 4, 5].includes(i % 7) && i < N - 1){
       const b = mesh(box(.018, .026, .09), bm, g, x0 + (i + 1) * kw, .745, .515);
-      PIANO.keys[midi + 1] = { m: b, y: .745 };
+      PIANO.keys[midi + 1] = { m: b, y: .745 }; b.userData.midi = midi + 1; b.castShadow = false;
     }
   }
 }
@@ -4780,11 +4836,11 @@ function pianoCtx(){
   try {
     const c = new (window.AudioContext || window.webkitAudioContext)(); PIANO.ctx = c;
     const out = c.createGain(); out.gain.value = .55;
-    const lp = c.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 6500;
+    const lp = c.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 5200;
     // small room reverb from a generated impulse
     const len = c.sampleRate * 1.6, ir = c.createBuffer(2, len, c.sampleRate);
     for (let ch = 0; ch < 2; ch++){ const d = ir.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3.2); }
-    const rv = c.createConvolver(); rv.buffer = ir; const wet = c.createGain(); wet.gain.value = .22;
+    const rv = c.createConvolver(); rv.buffer = ir; const wet = c.createGain(); wet.gain.value = .26;
     const comp = c.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 4; comp.attack.value = .003; comp.release.value = .25; comp.connect(c.destination);
     out.connect(lp); lp.connect(comp); lp.connect(rv); rv.connect(wet); wet.connect(comp);
     PIANO.out = out;
@@ -4792,36 +4848,48 @@ function pianoCtx(){
   return PIANO.ctx;
 }
 function noteOn(midi, vel = .8){
+  eggHear(midi);
   const c = pianoCtx(); if (!c) return;
   noteOff(midi, true);
   const t = c.currentTime, f = 440 * Math.pow(2, (midi - 69) / 12);
-  const v = c.createGain(); v.gain.value = 1; v.connect(PIANO.out);
-  const sustain = Math.min(7, Math.max(1.6, 3.6 * Math.sqrt(262 / f)));
-  const amps = [1, .55, .32, .2, .12, .07, .045];
+  // per-voice tone: a felt-hammer brightness that closes as the note rings (high notes get much darker, like a real piano)
+  const v = c.createGain(); v.gain.value = 1;
+  const tone = c.createBiquadFilter(); tone.type = "lowpass"; tone.Q.value = .4;
+  const open = Math.min(7000, f * (f > 900 ? 2.6 : 5)), settle = Math.min(4200, f * (f > 900 ? 1.6 : 2.6));
+  tone.frequency.setValueAtTime(open, t); tone.frequency.setTargetAtTime(settle, t + .02, .35);
+  tone.connect(v); v.connect(PIANO.out);
+  // longer, rounder decay; treble still shorter than bass but not clipped short
+  const sustain = Math.min(10, Math.max(3.2, 6.2 * Math.sqrt(262 / f)));
+  const level = vel * .2 * (f < 200 ? 1.2 : 1) * (f > 600 ? Math.pow(600 / f, .35) : 1);
+  const base = [1, .5, .28, .16, .09, .05, .03];
   const oscs = [];
-  amps.forEach((a, n0) => {
-    const n = n0 + 1, fn = f * n * Math.sqrt(1 + .00045 * n * n); if (fn > 12000) return;
-    const o = c.createOscillator(), gg = c.createGain(); o.type = "sine"; o.frequency.value = fn;
-    o.detune.value = (n === 1 ? 0 : (Math.random() - .5) * 4);
-    const peak = a * vel * .22 * (f < 200 ? 1.25 : 1);
-    gg.gain.setValueAtTime(0, t); gg.gain.linearRampToValueAtTime(peak, t + .004);
-    gg.gain.setTargetAtTime(peak * .35, t + .004, .08 / n);                 // quick initial drop (the "ping")
-    gg.gain.setTargetAtTime(0, t + .1, sustain / (1 + n0 * .7) / 3);       // long tail, upper partials die faster
-    o.connect(gg); gg.connect(v); o.start(t); o.stop(t + sustain * 1.6 + .2); oscs.push(o);
+  base.forEach((a0, n0) => {
+    const n = n0 + 1, fn = f * n * Math.sqrt(1 + .00035 * n * n); if (fn > 6500) return;
+    const a = a0 * Math.exp(-(n - 1) * f / 1800);                         // upper partials fade fast on high notes → no shrill edge
+    if (a < .004) return;
+    // two slightly detuned strings per partial (unison chorus) for warmth
+    [-1, 1].forEach(sd => {
+      if (n > 3 && sd > 0) return;
+      const o = c.createOscillator(), gg = c.createGain(); o.type = "sine"; o.frequency.value = fn; o.detune.value = sd * (n === 1 ? 1.4 : 2.2) + (Math.random() - .5) * 1.5;
+      const peak = a * level * (n > 3 ? 1 : .5);
+      gg.gain.setValueAtTime(0, t); gg.gain.linearRampToValueAtTime(peak, t + .005 + n0 * .0008);
+      gg.gain.setTargetAtTime(peak * .42, t + .006, .12 / Math.sqrt(n));     // the initial "ping" settling
+      gg.gain.setTargetAtTime(0, t + .14, sustain / (1 + n0 * .55) / 3);     // long tail
+      o.connect(gg); gg.connect(tone); o.start(t); o.stop(t + sustain * 1.8 + .3); oscs.push(o);
+    });
   });
-  // hammer knock
-  const nb = c.createBuffer(1, c.sampleRate * .03, c.sampleRate), d = nb.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 3);
-  const ns = c.createBufferSource(), bp = c.createBiquadFilter(), ng = c.createGain(); ns.buffer = nb; bp.type = "bandpass"; bp.frequency.value = Math.min(4000, f * 3); bp.Q.value = 1.2; ng.gain.value = .12 * vel;
+  // soft felt thump of the hammer (quieter and darker up high)
+  const nb = c.createBuffer(1, c.sampleRate * .025, c.sampleRate), d = nb.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 4);
+  const ns = c.createBufferSource(), bp = c.createBiquadFilter(), ng = c.createGain(); ns.buffer = nb; bp.type = "lowpass"; bp.frequency.value = Math.min(2200, f * 1.5); bp.Q.value = .5; ng.gain.value = .06 * vel * (f > 800 ? .5 : 1);
   ns.connect(bp); bp.connect(ng); ng.connect(v); ns.start(t);
   PIANO.voices[midi] = { v, oscs, held: true };
   const k = PIANO.keys[midi]; if (k){ k.m.position.y = k.y - .007; k.m.rotation.x = .05; }
-  const el = document.querySelector(`#pianoUI [data-m="${midi}"]`); if (el) el.classList.add("down");
 }
 function noteOff(midi, cut){
   const vc = PIANO.voices[midi]; const c = PIANO.ctx;
-  if (vc && c){ vc.v.gain.setTargetAtTime(0, c.currentTime, cut ? .015 : .11); const oscs = vc.oscs; setTimeout(() => oscs.forEach(o => { try { o.stop(); } catch(e){} }), cut ? 120 : 900); delete PIANO.voices[midi]; }
+  // releasing the key lets the note ring on and fade gently (damper with a longer tail)
+  if (vc && c){ vc.v.gain.setTargetAtTime(0, c.currentTime + (cut ? 0 : .08), cut ? .02 : .42); const oscs = vc.oscs; setTimeout(() => oscs.forEach(o => { try { o.stop(); } catch(e){} }), cut ? 150 : 2600); delete PIANO.voices[midi]; }
   const k = PIANO.keys[midi]; if (k){ k.m.position.y = k.y; k.m.rotation.x = 0; }
-  const el = document.querySelector(`#pianoUI [data-m="${midi}"]`); if (el) el.classList.remove("down");
 }
 // PC keys: bottom row = white keys from C4, top row = black keys
 const PC_KEYS = { a: 60, w: 61, s: 62, e: 63, d: 64, f: 65, t: 66, g: 67, y: 68, h: 69, u: 70, j: 71, k: 72, o: 73, l: 74, p: 75, ";": 76, "'": 77, "]": 78 };
@@ -4862,31 +4930,323 @@ function pianoUI(){
   el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up);
   return el;
 }
+// Z / X shift the PC keyboard down / up an octave (like a DAW); the high register is one press of X away
+let pcOct = 0; const pcHeld = {};
+function pcOctave(d){
+  pcOct = Math.max(-2, Math.min(1, pcOct + d));
+  const lo = ["C", "C", "C", "C"][0] + (4 + pcOct), hi = "F#" + (5 + pcOct);
+  toast({ ko: `<b>키보드 옥타브 ${pcOct > 0 ? "+" : ""}${pcOct}</b>A = ${lo} … ] = ${hi}`, ja: `<b>キーボードのオクターブ ${pcOct > 0 ? "+" : ""}${pcOct}</b>A = ${lo} … ] = ${hi}`, en: `<b>Keyboard octave ${pcOct > 0 ? "+" : ""}${pcOct}</b>A = ${lo} … ] = ${hi}` }[state.lang], 1500);
+}
 addEventListener("keydown", ev => {
   if (!pianoOn) return;
   if (ev.key === "Escape"){ standPiano(); return; }
-  const m = PC_KEYS[ev.key.toLowerCase()]; if (m == null || ev.repeat || ev.metaKey || ev.ctrlKey) return;
+  const k = ev.key.toLowerCase();
+  if ((k === "z" || k === "x") && !ev.repeat && !ev.metaKey && !ev.ctrlKey){ ev.preventDefault(); pcOctave(k === "x" ? 1 : -1); return; }
+  const m0 = PC_KEYS[k]; if (m0 == null || ev.repeat || ev.metaKey || ev.ctrlKey) return;
+  const m = m0 + 12 * pcOct; pcHeld[k] = m;
   ev.preventDefault(); noteOn(m, .8);
 });
-addEventListener("keyup", ev => { if (!pianoOn) return; const m = PC_KEYS[ev.key.toLowerCase()]; if (m != null) noteOff(m); });
+addEventListener("keyup", ev => { if (!pianoOn) return; const k = ev.key.toLowerCase(); const m = pcHeld[k] != null ? pcHeld[k] : PC_KEYS[k]; delete pcHeld[k]; if (m != null) noteOff(m); });
 const pianoLocal = (x, y, z) => PIANO.group.localToWorld(new THREE.Vector3(x, y, z));
 async function sitPiano(){
   if (pianoOn || state.mode !== "hall" || camMode !== "hall" || !PIANO.group) return;
   closeWelcome(); if (artistOpen) closeArtist();
   pianoOn = true; bakeLook(); camMode = "tween"; PLAYER.goal = null; PLAYER.keys = {};
   document.body.classList.add("piano-on"); pianoCtx();
-  const pos = pianoLocal(0, 1.2, 1.12), tgt = pianoLocal(0, .7, .42);
-  await camTo({ pos, tgt, fov: portrait() ? 74 : 56, roll: 0 }, Math.min(1500, Math.max(700, cam.pos.distanceTo(pos) * 230)), ease.io, 0, .012);
+  if (!$("#pianoCss")){ const st = document.createElement("style"); st.id = "pianoCss"; st.textContent = ".piano-on #hint,.piano-on .quick,.piano-on #artBubbles,.piano-on #bgmBtn,.piano-on .lobby-hs{opacity:0!important;pointer-events:none!important}"; document.head.appendChild(st); }
+  const V = pianoView();
+  await camTo(V, Math.min(1500, Math.max(700, cam.pos.distanceTo(V.pos) * 230)), ease.io, 0, .012);
   if (!pianoOn) return;
-  camMode = "piano"; pianoUI().classList.add("on");
+  camMode = "piano"; eggStep = 0; eggGlow();
+  const touch = matchMedia("(hover: none)").matches;
+  toast((touch
+    ? { ko: "<b>건반을 눌러 연주해 보세요</b>여러 손가락으로 화음도 칠 수 있어요", ja: "<b>鍵盤を押して弾いてみてください</b>複数の指で和音も弾けます", en: "<b>Tap the keys to play</b>Use several fingers for chords" }
+    : { ko: "<b>건반을 눌러 연주해 보세요</b>PC 키보드로도 칠 수 있어요<br>흰건반 · A S D F G H J K L ; '<br>검은건반 · W E T Y U O P<br>옥타브 내리기 · Z &nbsp; 올리기 · X",
+        ja: "<b>鍵盤を押して弾いてみてください</b>PCキーボードでも弾けます<br>白鍵 · A S D F G H J K L ; '<br>黒鍵 · W E T Y U O P<br>オクターブ下げ · Z &nbsp; 上げ · X",
+        en: "<b>Click the keys to play</b>You can also use your keyboard<br>White keys · A S D F G H J K L ; '<br>Black keys · W E T Y U O P<br>Octave down · Z &nbsp; up · X" })[state.lang], 5200);
 }
 async function standPiano(){
   if (!pianoOn || camMode === "tween") return;
   Object.keys(PIANO.voices).forEach(m => noteOff(+m));
-  pianoOn = false; const ui = $("#pianoUI"); if (ui) ui.classList.remove("on");
+  pcOct = 0; Object.keys(pcHeld).forEach(k => delete pcHeld[k]); if (EGGP.on) eggStop(); eggStep = 0; pianoOn = false; eggGlow();
+  pianoOn = false; pianoDown.forEach(m => noteOff(m)); pianoDown.clear(); $("#stage").classList.remove("pointing");
   document.body.classList.remove("piano-on");
   const p = pianoLocal(0, 0, 1.75); PLAYER.pos = V15(p.x, EYE, p.z); PLAYER.yaw = 0; PLAYER.goal = null; solveCollisions(PLAYER.pos);
   camMode = "tween"; await camTo(hallView(), 800, ease.io); camMode = "hall";
+}
+
+/* ---------- discography: coming soon ---------- */
+{ const op0 = openPanel; openPanel = function(tab){
+    if (tab === "disco"){ toast({ ko: "<b>디스코그래피</b>준비 중이에요", ja: "<b>ディスコグラフィ</b>準備中です", en: "<b>Discography</b>Coming soon" }[state.lang], 2200); return; }
+    return op0.apply(this, arguments);
+  }; }
+
+/* ---------- performance: hide lobby-only things while you sit in a room, trim small shadow casters ---------- */
+let lobbyOnly = [], lobbyHidden = false;
+function markLobbyOnly(from){ lobbyOnly = scene.children.slice(from).filter(o => !o.isLight); }
+function lobbyVisibility(){
+  const hide = state.mode === "room" && camMode === "seated";
+  if (hide === lobbyHidden) return; lobbyHidden = hide;
+  lobbyOnly.forEach(o => { o.visible = !hide; });
+  artistFigs.forEach(a => { if (a.bub) a.bub.classList.remove("on"); });
+}
+function trimShadowCasters(){
+  scene.traverse(o => {
+    if (!o.isMesh || !o.castShadow || !o.geometry) return;
+    try { if (!o.geometry.boundingSphere) o.geometry.computeBoundingSphere(); const s2 = o.getWorldScale ? o.getWorldScale(new THREE.Vector3()) : { x: 1, y: 1, z: 1 };
+      if (o.geometry.boundingSphere && o.geometry.boundingSphere.radius * Math.max(s2.x, s2.y, s2.z) < .09) o.castShadow = false; } catch(e){}
+  });
+}
+
+// play the 3D keys directly: press, hold, slide across for a glissando, several fingers at once
+const pianoDown = new Map();
+const pianoKeyMeshes = () => PIANO.list || (PIANO.list = Object.values(PIANO.keys).map(k => k.m));
+function pianoPick(ev){ const h = pick(ev, pianoKeyMeshes()); return h ? h.object.userData.midi : null; }
+const pianoLive = () => pianoOn && camMode === "piano";
+addEventListener("pointerdown", ev => {
+  if (!pianoLive() || !renderer || ev.target !== renderer.domElement) return;
+  const m = pianoPick(ev); if (m == null) return;
+  ev.preventDefault(); pianoDown.set(ev.pointerId, m); noteOn(m, .72 + Math.random() * .15);
+}, true);
+window.addEventListener("pointermove", ev => {
+  if (!pianoLive() || !renderer) return;
+  const m = ev.target === renderer.domElement ? pianoPick(ev) : null;
+  $("#stage").classList.toggle("pointing", m != null);
+  if (!pianoDown.has(ev.pointerId)) return;
+  const p = pianoDown.get(ev.pointerId);
+  if (m != null && m !== p){ noteOff(p); noteOn(m, .68); pianoDown.set(ev.pointerId, m); }
+}, true);
+const pianoUp = ev => { const p = pianoDown.get(ev.pointerId); if (p != null){ noteOff(p); pianoDown.delete(ev.pointerId); } };
+addEventListener("pointerup", pianoUp, true); addEventListener("pointercancel", pianoUp, true);
+
+/* ---------- footsteps on the wooden stairs (intro) ---------- */
+let stepNoise = null;
+function stairStep(i, n){
+  let c = null; try { c = (typeof BAP !== "undefined" && BAP.ctx) || null; } catch(e){}
+  if (!c || c.state !== "running") return;            // browsers keep sound off until the visitor allows it
+  const t = c.currentTime, left = i % 2, last = i >= n - 1, vol = (last ? .32 : .42) * (.85 + Math.random() * .3);
+  const out = c.createGain(); out.gain.value = vol; out.connect(c.destination);
+  // body: a short low wooden thump
+  const o = c.createOscillator(), og = c.createGain(); o.type = "sine";
+  const f0 = (last ? 95 : 120) * (left ? 1 : 1.07) * (.95 + Math.random() * .1);
+  o.frequency.setValueAtTime(f0 * 1.8, t); o.frequency.exponentialRampToValueAtTime(f0, t + .025);
+  og.gain.setValueAtTime(0, t); og.gain.linearRampToValueAtTime(.9, t + .004); og.gain.exponentialRampToValueAtTime(.001, t + .16);
+  o.connect(og).connect(out); o.start(t); o.stop(t + .2);
+  // heel + sole scuff: filtered noise
+  if (!stepNoise){ stepNoise = c.createBuffer(1, c.sampleRate * .12, c.sampleRate); const d = stepNoise.getChannelData(0); for (let k = 0; k < d.length; k++) d[k] = (Math.random() * 2 - 1) * Math.pow(1 - k / d.length, 2.5); }
+  const ns = c.createBufferSource(), bp = c.createBiquadFilter(), ng = c.createGain();
+  ns.buffer = stepNoise; ns.playbackRate.value = .8 + Math.random() * .4; bp.type = "bandpass"; bp.frequency.value = 1100 + Math.random() * 700; bp.Q.value = .9; ng.gain.value = .35;
+  ns.connect(bp).connect(ng).connect(out); ns.start(t + .006);
+  // now and then an old stair creaks a little
+  if (!last && Math.random() < .18){ const cr = c.createOscillator(), cg = c.createGain(), cf = c.createBiquadFilter(); cr.type = "sawtooth";
+    cr.frequency.setValueAtTime(210 + Math.random() * 60, t + .03); cr.frequency.linearRampToValueAtTime(260 + Math.random() * 60, t + .22);
+    cf.type = "bandpass"; cf.frequency.value = 950; cf.Q.value = 7; cg.gain.setValueAtTime(0, t + .03); cg.gain.linearRampToValueAtTime(.05, t + .08); cg.gain.linearRampToValueAtTime(0, t + .26);
+    cr.connect(cf).connect(cg).connect(out); cr.start(t + .03); cr.stop(t + .3); }
+}
+
+/* ---------- mobile pass: header fits in every language, cards don't clip, overlays size to their text ---------- */
+(function(){
+  const st = document.createElement("style"); st.id = "mobileFix"; st.textContent = `
+  #toast{width:max-content}
+  #toast b{white-space:normal}
+  #lookHint{width:max-content;max-width:min(86vw,360px)}
+  #welcome .d360{position:relative;width:96px;height:26px;margin:0 auto 8px}
+  #welcome .d360 b{position:absolute;top:50%;left:4px;right:4px;height:2px;margin-top:-1px;background:linear-gradient(90deg,transparent,rgba(31,47,90,.45),transparent)}
+  #welcome .d360 i{position:absolute;top:50%;left:50%;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;background:#1f2f5a;animation:d360 1.8s ease-in-out infinite}
+  @keyframes d360{0%,100%{transform:translateX(-32px)}50%{transform:translateX(32px)}}
+  @media (max-width:820px){
+    #pbody{padding-bottom:110px!important}
+    .panel-open #bgmBtn,.in-room #bgmBtn{opacity:0!important;pointer-events:none!important}
+  }
+  @media (max-width:480px){
+    .topbar{padding-left:12px!important;padding-right:12px!important}
+    .brand{font-size:.9rem!important;gap:7px!important}
+    .lp-logo{width:27px!important;height:29px!important}
+    .top-actions{gap:6px!important}
+    .langs button{padding:5px 6px!important;font-size:.64rem!important}
+    .btn-book{padding:7px 10px!important;font-size:.76rem!important;white-space:nowrap}
+    #welcome{width:min(92vw,400px)}
+    #welcome .wc-paper{padding:28px 18px 20px!important}
+    #welcome h2{font-size:clamp(1.4rem,7.4vw,2rem)!important}
+    #welcome h2 span{white-space:normal!important;display:inline!important}
+    #welcome .wc-b{gap:8px}
+    #welcome .wc-main{font-size:.9rem!important;padding:13px 12px 12px!important;white-space:nowrap}
+    #welcome .wc-ghost{font-size:1.25rem!important;padding:12px 6px!important;white-space:nowrap}
+    #welcome .hint-t{font-size:1.45rem!important}
+    #artistCard .ac{margin-top:14vh}
+    .art-bub{max-width:min(230px,64vw)}
+  }`;
+  document.head.appendChild(st);
+  // short label on the header booking button when the phone is narrow
+  const SHORT = { ko: "예약", ja: "予約", en: "Book" };
+  function fitHeader(){ const b = document.querySelector(".topbar .btn-book"); if (!b) return; const full = (L() || {}).book || b.textContent; b.textContent = innerWidth <= 420 ? (SHORT[state.lang] || full) : full; }
+  const al0 = applyLang; applyLang = function(){ const r = al0.apply(this, arguments); try { fitHeader(); } catch(e){} return r; };
+  addEventListener("resize", () => { try { fitHeader(); } catch(e){} });
+  setTimeout(() => { try { fitHeader(); } catch(e){} }, 0);
+})();
+
+/* ---------- the music sheet on the piano: "Ye — Runaway", hand-scribbled (made-up notes, just for the look) ---------- */
+function musicSheetTexture(){
+  const c = cnv(1152, 800, (g, w, h) => {
+    const r = rnd(808);
+    g.fillStyle = "#f2ead8"; g.fillRect(0, 0, w, h);
+    const pg = g.createRadialGradient(w * .3, h * .2, 50, w * .5, h * .5, w * .8); pg.addColorStop(0, "rgba(255,255,255,.35)"); pg.addColorStop(1, "rgba(120,90,50,.12)"); g.fillStyle = pg; g.fillRect(0, 0, w, h);
+    // coffee ring
+    g.strokeStyle = "rgba(140,90,40,.16)"; g.lineWidth = 9; g.beginPath(); g.arc(w * .86, h * .8, 62, 0, Math.PI * 1.7); g.stroke();
+    // title, pencil-ish
+    g.fillStyle = "#2b2622"; g.textAlign = "center"; g.font = '700 64px "Caveat", "Nanum Pen Script", cursive'; g.fillText("Ye — Runaway", w / 2, 82);
+    g.font = '400 26px "Caveat", "Nanum Pen Script", cursive'; g.fillStyle = "rgba(43,38,34,.7)"; g.fillText("intro · piano", w / 2, 118);
+    g.textAlign = "left"; g.font = '400 24px "Caveat", cursive'; g.fillText("♩ = 87", 70, 150);
+    const ink = "rgba(30,26,22,.86)";
+    const wob = (x0, y0, x1, y1) => { g.beginPath(); g.moveTo(x0, y0 + (r() - .5) * 1.4); const n = 6; for (let i = 1; i <= n; i++) g.lineTo(x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n + (r() - .5) * 1.6); g.stroke(); };
+    const sys = [190, 390, 590];
+    sys.forEach((top, si) => {
+      [0, 1].forEach(st => {
+        const y0 = top + st * 92, gap = 13;
+        g.strokeStyle = "rgba(30,26,22,.55)"; g.lineWidth = 1.6;
+        for (let l = 0; l < 5; l++) wob(70, y0 + l * gap, w - 60, y0 + l * gap);
+        // clef scribble
+        g.strokeStyle = ink; g.lineWidth = 3.2; g.beginPath();
+        if (st === 0){ g.moveTo(96, y0 + 66); g.bezierCurveTo(78, y0 + 40, 118, y0 - 6, 100, y0 - 14); g.bezierCurveTo(84, y0 - 4, 92, y0 + 52, 110, y0 + 44); g.bezierCurveTo(126, y0 + 34, 104, y0 + 14, 90, y0 + 30); }
+        else { g.moveTo(84, y0 + 10); g.bezierCurveTo(110, y0 - 4, 124, y0 + 24, 90, y0 + 48); g.moveTo(132, y0 + 9); g.arc(130, y0 + 9, 2.5, 0, 7); g.moveTo(132, y0 + 22); g.arc(130, y0 + 22, 2.5, 0, 7); }
+        g.stroke();
+        // bar lines
+        g.lineWidth = 2; g.strokeStyle = "rgba(30,26,22,.7)";
+        [1, 2, 3, 4].forEach(b => { const x = 150 + b * ((w - 220) / 4); wob(x, y0, x, y0 + gap * 4); });
+      });
+      // brace + a pencilled note in the margin
+      g.strokeStyle = ink; g.lineWidth = 3; g.beginPath(); g.moveTo(62, top); g.quadraticCurveTo(48, top + 70, 62, top + 144); g.stroke();
+      if (si === 1){ g.textAlign = "center"; g.save(); g.translate(w / 2, top + 64); g.rotate(-.03);
+        g.fillStyle = "#f3ecdc"; g.beginPath(); g.moveTo(-330, -58); g.lineTo(330, -52); g.lineTo(326, 84); g.lineTo(-326, 80); g.closePath(); g.fill();
+        g.fillStyle = "rgba(214,196,150,.8)"; g.fillRect(-46, -70, 92, 22); g.fillStyle = "rgba(168,53,43,.9)";
+        g.font = '400 54px "Caveat", "Nanum Pen Script", cursive'; g.fillText("follow the glowing keys ✦", 0, 0);
+        g.font = '400 44px "Nanum Pen Script", "Caveat", cursive'; g.fillText("빛나는 건반을 따라 쳐 보세요", 0, 58); g.restore(); g.textAlign = "left"; }
+    });
+    g.fillStyle = "rgba(43,38,34,.55)"; g.font = '400 22px "IBM Plex Mono", monospace'; g.textAlign = "right"; g.fillText("JEYA SOUND · B1", w - 60, h - 30);
+  });
+  const t = tex(c); t.anisotropy = 8; return t;
+}
+
+/* =========================================================
+   PIANO EASTER EGG — play the secret notes and the song pops up
+   Fill in EGG.notes with note names (C4 = middle C = PC key "A"), e.g. ["E5","E5","D5", ...]
+   and EGG.spotify with the track link. Until notes are filled in, nothing triggers.
+   ========================================================= */
+const EGG = {
+  title: "Ye — Runaway",
+  notes: [],                 // ← secret sequence goes here
+  audio: "audio/egg_runaway.mp3",   // the clip that plays when it triggers
+  spotify: ""                // optional: https://open.spotify.com/track/... (shown as a link on the card)
+};
+const NOTE_IX = { C: 0, "C#": 1, Db: 1, D: 2, "D#": 3, Eb: 3, E: 4, F: 5, "F#": 6, Gb: 6, G: 7, "G#": 8, Ab: 8, A: 9, "A#": 10, Bb: 10, B: 11 };
+function noteToMidi(n){ const m = /^([A-G](?:#|b)?)(-?\d)$/.exec(String(n).trim()); return m && NOTE_IX[m[1]] != null ? 12 * (+m[2] + 1) + NOTE_IX[m[1]] : null; }
+let eggHeard = [], eggDone = 0;
+// follow-along: the next key of the secret sequence (EGG.notes) glows softly; a wrong key starts over
+let eggStep = 0;
+const eggSeq = () => EGG.notes.map(noteToMidi).filter(v => v != null);
+function eggHear(midi){
+  const seq = eggSeq(); if (!seq.length) return;
+  if (midi === seq[eggStep]) eggStep++;
+  else eggStep = midi === seq[0] ? 1 : 0;
+  if (eggStep >= seq.length){ eggStep = 0; if (performance.now() - eggDone > 4000){ eggDone = performance.now(); eggFire(); } }
+  eggGlow();
+}
+const EGLOW = { w: null, b: null, cur: null, base: null };
+function eggGlow(){
+  if (EGLOW.cur){ EGLOW.cur.material = EGLOW.base; EGLOW.cur = null; }
+  const seq = eggSeq(); if (!seq.length || !pianoOn || (window.EGGP && EGGP.on)) return;
+  const k = PIANO.keys[seq[eggStep]]; if (!k) return;
+  const black = k.y > .735;
+  EGLOW.w = EGLOW.w || new THREE.MeshStandardMaterial({ color: 0xfff1d6, roughness: .3, emissive: 0xffb45a, emissiveIntensity: .5 });
+  EGLOW.b = EGLOW.b || new THREE.MeshStandardMaterial({ color: 0x2a1c10, roughness: .3, emissive: 0xffa040, emissiveIntensity: .5 });
+  EGLOW.base = k.m.material; EGLOW.cur = k.m; k.m.material = black ? EGLOW.b : EGLOW.w;
+}
+function eggGlowTick(t){ const m = EGLOW.cur && EGLOW.cur.material; if (m && m.emissiveIntensity != null) m.emissiveIntensity = .25 + .55 * (.5 + .5 * Math.sin(t * 4)); }
+function eggPop(){
+  let o = $("#eggCard");
+  if (!o){
+    o = document.createElement("div"); o.id = "eggCard"; document.body.appendChild(o);
+    const st = document.createElement("style"); st.textContent = `
+      #eggCard{position:fixed;left:50%;top:50%;z-index:30;width:min(92vw,400px);transform:translate(-50%,-44%) rotate(-2deg);opacity:0;pointer-events:none;transition:opacity .4s,transform .5s cubic-bezier(.3,1.5,.5,1);filter:drop-shadow(0 18px 26px rgba(0,0,0,.6))}
+      #eggCard.on{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) rotate(-2deg)}
+      #eggCard .pp{position:relative;padding:34px 24px 22px;background:#ece2cb;clip-path:polygon(0 4%,7% 0,16% 3%,27% .5%,38% 3%,50% 0,62% 3%,74% .5%,86% 3%,100% 1%,98.5% 50%,100% 97%,88% 100%,74% 97%,60% 100%,46% 97%,32% 100%,18% 97%,4% 100%,0 96%,1.5% 50%);text-align:center;color:#2a221a}
+      #eggCard .tape{position:absolute;z-index:2;top:-8px;left:50%;margin-left:-48px;width:96px;height:26px;background:rgba(232,140,122,.8);transform:rotate(4deg);clip-path:polygon(0 15%,8% 0,92% 10%,100% 0,96% 100%,88% 85%,10% 100%,3% 88%)}
+      #eggCard .k{font-family:var(--f-mono);font-size:.64rem;letter-spacing:.24em;color:#a8352b}
+      #eggCard h3{margin:6px 0 12px;font-family:"Nanum Pen Script","Caveat",cursive;font-weight:400;font-size:2.5rem;line-height:1;color:#1f2f5a}
+      #eggCard iframe{display:block;width:100%;height:152px;border:0;border-radius:12px;background:#1a1714}
+      #eggCard .soon{font-size:.9rem;color:#6b5f52;padding:10px 0}
+      #eggCard .x{margin-top:14px;font:inherit;font-family:"Nanum Pen Script","Caveat",cursive;font-size:1.4rem;background:none;border:0;color:#2a221a;cursor:pointer;border-bottom:2px solid rgba(42,34,26,.5)}`;
+    document.head.appendChild(st);
+  }
+  const id = (/open\.spotify\.com\/(?:intl-[a-z]+\/)?(track|album)\/([A-Za-z0-9]+)/.exec(EGG.spotify) || []);
+  const t = { ko: ["숨은 곡을 찾았어요!", "링크 준비 중", "닫기"], ja: ["隠し曲を見つけました!", "リンク準備中", "閉じる"], en: ["You found the hidden track!", "Link coming soon", "Close"] }[state.lang];
+  o.innerHTML = `<div class="pp"><span class="tape"></span><div class="k">${esc(t[0])}</div><h3>${esc(EGG.title)}</h3>${id[2] ? `<a class="soon" href="${esc(EGG.spotify)}" target="_blank" rel="noopener">Spotify ↗</a>` : ""}<button type="button" class="x">${esc(t[2])}</button></div>`;
+  o.querySelector(".x").onclick = () => o.classList.remove("on");
+  requestAnimationFrame(() => o.classList.add("on"));
+}
+addEventListener("keydown", ev => { if (ev.key === "Escape" && $("#eggCard") && $("#eggCard").classList.contains("on")) eggStop(); });
+
+// frame two full octaves C4–C6 (E5 comfortably in view) on any screen shape
+function pianoView(){
+  const cx = -.648 + 22.5 * .036;                       // centre of white keys C4…E6 (piano-local x)
+  const fov = portrait() ? 60 : 50, aspect = innerWidth / Math.max(1, innerHeight);
+  const tanH = Math.tan(fov * Math.PI / 360) * aspect, dist = Math.max(.55, .345 / tanH), tilt = .72;
+  return { pos: pianoLocal(cx, .76 + dist * Math.sin(tilt), .5 + dist * Math.cos(tilt)), tgt: pianoLocal(cx, .8, .5), fov, roll: 0 };
+}
+addEventListener("resize", () => { if (pianoOn && camMode === "piano") Object.assign(cam, pianoView()); });
+
+/* ---------- easter egg: the reveal (key wave, lights dip and flare, notes float up) then the clip plays ---------- */
+var EGGP = { a: null, on: false };
+function eggFire(){
+  if (EGGP.on) return;
+  { const tt = $("#toast"); if (tt) tt.classList.remove("on"); }
+  // 1) the keyboard ripples once, low to high
+  const ks = Object.keys(PIANO.keys).map(Number).filter(m => m >= 60 && m <= 88).sort((a, b) => a - b);
+  ks.forEach((m, i) => setTimeout(() => { const k = PIANO.keys[m]; if (!k) return; k.m.position.y = k.y - .007; k.m.rotation.x = .05; setTimeout(() => { if (!PIANO.voices[m]){ k.m.position.y = k.y; k.m.rotation.x = 0; } }, 140); }, 260 + i * 22));
+  // 2) the room holds its breath, then flares warm
+  const e0 = renderer.toneMappingExposure;
+  tween(420, k => renderer.toneMappingExposure = e0 * (1 - .45 * k), ease.out).then(() => tween(900, k => renderer.toneMappingExposure = e0 * (.55 + .45 * k) + Math.sin(k * Math.PI) * .35, ease.out));
+  // 3) a warm flash + music notes drifting up the screen
+  let fx = $("#eggFx");
+  if (!fx){
+    fx = document.createElement("div"); fx.id = "eggFx"; document.body.appendChild(fx);
+    const st = document.createElement("style"); st.textContent = `
+      #eggFx{position:fixed;inset:0;z-index:25;pointer-events:none;overflow:hidden}
+      #eggFx .flash{position:absolute;inset:0;background:radial-gradient(60% 55% at 50% 60%,rgba(255,196,120,.55),rgba(255,140,60,0) 70%);opacity:0;animation:eggFlash 1.6s ease-out .45s both}
+      #eggFx i{position:absolute;bottom:-40px;font-style:normal;color:#ffe1b0;text-shadow:0 0 12px rgba(255,170,80,.9);animation:eggRise var(--d,3s) cubic-bezier(.2,.6,.3,1) var(--w,0s) both}
+      @keyframes eggFlash{0%{opacity:0}25%{opacity:1}100%{opacity:0}}
+      @keyframes eggRise{0%{transform:translate(0,0) rotate(0);opacity:0}15%{opacity:1}100%{transform:translate(var(--x,0px),-110vh) rotate(var(--r,20deg));opacity:0}}`;
+    document.head.appendChild(st);
+  }
+  fx.innerHTML = `<div class="flash"></div>` + Array.from({ length: 22 }, (_, i) => `<i style="left:${(5 + Math.random() * 90).toFixed(1)}%;font-size:${(18 + Math.random() * 26).toFixed(0)}px;--d:${(2.6 + Math.random() * 1.8).toFixed(2)}s;--w:${(.5 + i * .07).toFixed(2)}s;--x:${((Math.random() - .5) * 120).toFixed(0)}px;--r:${((Math.random() - .5) * 60).toFixed(0)}deg">${"♪♫♩♬"[i % 4]}</i>`).join("");
+  setTimeout(() => { fx.innerHTML = ""; }, 6500);
+  // 4) the clip, with the lobby music stepping aside
+  EGGP.on = true;
+  try {
+    const a = EGGP.a = new Audio(EGG.audio); a.volume = 0; a.play().catch(() => {});
+    let v = 0; const up = setInterval(() => { v = Math.min(.9, v + .09); a.volume = v; if (v >= .9) clearInterval(up); }, 40);
+    a.addEventListener("ended", eggStop);
+  } catch(e){}
+  setTimeout(eggCard, 900);
+}
+function eggStop(){
+  EGGP.on = false; setTimeout(eggGlow, 0); const a = EGGP.a; EGGP.a = null;
+  if (a){ let v = a.volume; const dn = setInterval(() => { v = Math.max(0, v - .08); a.volume = v; if (v <= 0){ clearInterval(dn); a.pause(); } }, 40); }
+  const o = $("#eggCard"); if (o) o.classList.remove("on");
+}
+function eggCard(){
+  eggPop();
+  const o = $("#eggCard"); if (!o) return;
+  const t = { ko: ["지금 재생 중", "멈추기"], ja: ["再生中", "停止"], en: ["Now playing", "Stop"] }[state.lang];
+  const h3 = o.querySelector("h3");
+  if (h3 && !o.querySelector(".eq")){ const eq = document.createElement("div"); eq.className = "eq"; eq.innerHTML = `<span></span><span></span><span></span><span></span><span></span><b>${esc(t[0])}</b>`; h3.after(eq); }
+  const x = o.querySelector(".x"); if (x){ x.textContent = t[1]; x.onclick = eggStop; }
+  if (!$("#eggEqCss")){ const st = document.createElement("style"); st.id = "eggEqCss"; st.textContent = `
+    #eggCard .eq{display:flex;align-items:flex-end;justify-content:center;gap:4px;height:26px;margin:2px 0 8px}
+    #eggCard .eq span{width:5px;background:#a8352b;border-radius:2px;animation:eqb .9s ease-in-out infinite}
+    #eggCard .eq span:nth-child(2){animation-delay:-.3s}#eggCard .eq span:nth-child(3){animation-delay:-.6s}#eggCard .eq span:nth-child(4){animation-delay:-.15s}#eggCard .eq span:nth-child(5){animation-delay:-.45s}
+    #eggCard .eq b{margin-left:10px;font-family:var(--f-mono);font-size:.62rem;letter-spacing:.2em;color:#7a6a58;font-weight:400;align-self:center}
+    @keyframes eqb{0%,100%{height:6px}50%{height:24px}}`; document.head.appendChild(st); }
 }
 
 </script>
