@@ -1683,7 +1683,7 @@ let labels = [], hemi, fill, inLights = [], view = "seated", busy = false;
 const DOOR_OPEN = -1.6;
 const Q = (() => { const lite = mobile() || (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 4; return { lite, pr: Math.min(devicePixelRatio || 1, mobile() ? 2 : (lite ? 1.25 : 1.5)), shadow: lite ? 1024 : 2048 }; })();
 function initThree(){
-  renderer = new THREE.WebGLRenderer({ antialias: !Q.lite || (devicePixelRatio || 1) < 2, powerPreference: "high-performance" });
+  renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
   renderer.setPixelRatio(Q.pr);
   renderer.setSize(innerWidth, innerHeight);
   renderer.outputEncoding = THREE.sRGBEncoding;
@@ -1983,7 +1983,7 @@ stage.addEventListener("pointerdown", ev => { if (sceneReady && canLook()){ drag
 addEventListener("pointermove", ev => {
   if (!renderer || !camera || !sceneReady) return;
   if (ev.pointerType === "mouse" && !drag){ look.tx = (ev.clientX / innerWidth - .5) * 2; look.ty = (ev.clientY / innerHeight - .5) * 2; }
-  if (drag){ const dx = ev.clientX - drag.x, dy = ev.clientY - drag.y; if (Math.hypot(dx, dy) > 6){ dragMoved = true; stage.classList.add("dragging"); } if (dragMoved){ const k = ev.pointerType === "mouse" ? .0042 : Math.PI / Math.max(320, innerWidth); hallLook.tyaw = drag.yaw - dx * k; hallLook.tpitch = Math.max(-.55, Math.min(.45, drag.pitch - dy * k * .8)); } return; }
+  if (drag){ const dx = ev.clientX - drag.x, dy = ev.clientY - drag.y; if (Math.hypot(dx, dy) > 6){ dragMoved = true; stage.classList.add("dragging"); } if (dragMoved){ const k = ev.pointerType === "mouse" ? .0042 : Math.PI * .5 / Math.max(320, innerWidth); hallLook.tyaw = drag.yaw - dx * k; hallLook.tpitch = Math.max(-.55, Math.min(.45, drag.pitch - dy * k * .8)); } return; }
   const tip = $("#tip");
   if (ev.target !== renderer.domElement){ if (state.mode === "hall") hoverRoom(null); tip.classList.remove("on"); return; }
   if (state.mode === "hall"){ const h = camMode === "hall" && !atDesk ? pick(ev, pickables) : null; hoverRoom(h ? (h.object.userData.room || null) : null); if (h && (h.object.userData.guide || h.object.userData.disco || h.object.userData.artist != null || h.object.userData.tv || h.object.userData.piano)) stage.classList.add("pointing"); }
@@ -2066,10 +2066,15 @@ function step(now){
   if (playing) platters.forEach(p => p.rotation.y -= .055);
   applyCamera(); placeOverlay();
   frameN++; if (tweens.length ? frameN % 2 === 0 : frameN % 4 === 0) renderer.shadowMap.needsUpdate = true;
-  perf.acc += now - (perf.last || now); perf.last = now; perf.n++;
-  if (perf.n >= 90){ const avg = perf.acc / perf.n; perf.acc = 0; perf.n = 0;
-    if (avg > 26 && FX.on){ FX.on = false; } else if (avg > 27 && renderer.getPixelRatio() > 1){ renderer.setPixelRatio(Math.max(1, renderer.getPixelRatio() - .25)); }
-    else if (avg > 34 && sun.castShadow && renderer.getPixelRatio() <= 1){ sun.castShadow = false; } }
+  // adaptive quality: ignore hitches (loading, tab switches), wait until things settle, and on phones give up
+  // the expensive extras (lens, shadows) before ever lowering sharpness, which never drops below 1.5x there
+  { const dtp = now - (perf.last || now); perf.last = now; if (dtp < 250 && now > (perf.t0 || (perf.t0 = now + 4000))){ perf.acc += dtp; perf.n++; } }
+  if (perf.n >= 120){ const avg = perf.acc / perf.n; perf.acc = 0; perf.n = 0;
+    perf.slow = avg > 28 ? (perf.slow || 0) + 1 : 0;
+    if (perf.slow >= 2){ perf.slow = 0; const floor = mobile() ? 1.5 : 1;
+      if (FX.on) FX.on = false;
+      else if (sun.castShadow && (mobile() || renderer.getPixelRatio() <= floor)) sun.castShadow = false;
+      else if (renderer.getPixelRatio() > floor) renderer.setPixelRatio(Math.max(floor, renderer.getPixelRatio() - .25)); } }
   renderFrame();
 }
 let frameN = 0; const perf = { acc: 0, n: 0, last: 0 };
@@ -2613,7 +2618,7 @@ function buildCorridorExtras(){
   });
   applyBasementRoom(); guideToActiveRoom();
   { const n0 = scene.children.length; furnishLobby(); buildArtists(); markLobbyOnly(n0); }
-  trimShadowCasters();
+  trimShadowCasters(); sharpenTextures();
 }
 
 /* ---------- views & flow (first person) ---------- */
@@ -2668,10 +2673,10 @@ function finishLeaving(){
   hallLook.yaw = hallLook.tyaw = 0; if (rec) playerHome(); Object.assign(cam, hallView()); state.room = null; camMode = "hall"; uiFor("hall");
 }
 { const enter0 = enterRoom; enterRoom = function(id, instant){ atDesk = false; if (guideOut) putGuideDown(); if (artistOpen) closeArtist(); const rec = roomObjs.find(r => r.e.id === id); if (rec && !rec.active) return knockLocked(rec, instant); if (instant || reduce){ const r = enter0(id, instant); setTimeout(showLookHint, 700); return r; } return enterKnock(id); }; }
-function toast(html, ms = 2800){
+function toast(html, ms = 2800, low){
   let t = $("#toast");
   if (!t){ t = document.createElement("div"); t.id = "toast"; document.body.appendChild(t); const st = document.createElement("style"); st.textContent = `#toast{position:fixed;left:50%;top:42%;transform:translate(-50%,-50%) scale(.96);z-index:20;max-width:min(92vw,520px);padding:14px 20px;border-radius:4px;background:rgba(20,16,12,.88);color:#f1ebdf;font-family:var(--f-body);font-size:.9rem;line-height:1.5;text-align:center;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;box-shadow:0 12px 30px rgba(0,0,0,.4)}#toast b{display:block;font-family:var(--f-display);font-size:1.05rem;margin-bottom:2px}#toast.on{opacity:1;transform:translate(-50%,-50%) scale(1)}`; document.head.appendChild(st); }
-  t.innerHTML = html; t.classList.add("on"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("on"), ms);
+  t.classList.toggle("low", !!low); t.innerHTML = html; t.classList.add("on"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("on"), ms);
 }
 async function knockLocked(rec, instant){
   if (state.mode !== "hall" || camMode !== "hall") { if (instant) toast(L().lockedMsg); return; }
@@ -4722,7 +4727,7 @@ function uprightPiano(){
   buildPianoKeys(g); PIANO.group = g;
   mesh(rbox(1.36, .07, .02, .006), body, g, 0, .79, .43, { rx: -.2 });           // fallboard
   // music sheet, brass pedals and a small lamp on top
-  { const sm = new THREE.MeshBasicMaterial({ map: musicSheetTexture(), side: THREE.DoubleSide }); sm.color.setRGB(.93, .9, .84); mesh(new THREE.PlaneGeometry(.46, .32), sm, g, .16, .955, .43, { rx: -.15, cast: false, receive: false }); }
+  { const sm = new THREE.MeshBasicMaterial({ map: musicSheetTexture(), side: THREE.DoubleSide }); sm.color.setRGB(.93, .9, .84); mesh(new THREE.PlaneGeometry(.46, .32), sm, g, .16, .955, .46, { rx: -.12, cast: false, receive: false }); }
   [-.1, 0, .1].forEach(x => mesh(box(.035, .015, .09), M.brass, g, x, .06, .45));
   mesh(new THREE.CylinderGeometry(.06, .07, .03, 18), M.brass, g, -.5, 1.29, .2);
   mesh(new THREE.CylinderGeometry(.008, .008, .26, 8), M.brass, g, -.5, 1.42, .2);
@@ -4935,7 +4940,7 @@ let pcOct = 0; const pcHeld = {};
 function pcOctave(d){
   pcOct = Math.max(-2, Math.min(1, pcOct + d));
   const lo = ["C", "C", "C", "C"][0] + (4 + pcOct), hi = "F#" + (5 + pcOct);
-  toast({ ko: `<b>키보드 옥타브 ${pcOct > 0 ? "+" : ""}${pcOct}</b>A = ${lo} … ] = ${hi}`, ja: `<b>キーボードのオクターブ ${pcOct > 0 ? "+" : ""}${pcOct}</b>A = ${lo} … ] = ${hi}`, en: `<b>Keyboard octave ${pcOct > 0 ? "+" : ""}${pcOct}</b>A = ${lo} … ] = ${hi}` }[state.lang], 1500);
+  toast({ ko: `<b>키보드 옥타브 ${pcOct > 0 ? "+" : ""}${pcOct}</b>A = ${lo} … ] = ${hi}`, ja: `<b>キーボードのオクターブ ${pcOct > 0 ? "+" : ""}${pcOct}</b>A = ${lo} … ] = ${hi}`, en: `<b>Keyboard octave ${pcOct > 0 ? "+" : ""}${pcOct}</b>A = ${lo} … ] = ${hi}` }[state.lang], 1500, true);
 }
 addEventListener("keydown", ev => {
   if (!pianoOn) return;
@@ -4963,7 +4968,7 @@ async function sitPiano(){
     ? { ko: "<b>건반을 눌러 연주해 보세요</b>여러 손가락으로 화음도 칠 수 있어요", ja: "<b>鍵盤を押して弾いてみてください</b>複数の指で和音も弾けます", en: "<b>Tap the keys to play</b>Use several fingers for chords" }
     : { ko: "<b>건반을 눌러 연주해 보세요</b>PC 키보드로도 칠 수 있어요<br>흰건반 · A S D F G H J K L ; '<br>검은건반 · W E T Y U O P<br>옥타브 내리기 · Z &nbsp; 올리기 · X",
         ja: "<b>鍵盤を押して弾いてみてください</b>PCキーボードでも弾けます<br>白鍵 · A S D F G H J K L ; '<br>黒鍵 · W E T Y U O P<br>オクターブ下げ · Z &nbsp; 上げ · X",
-        en: "<b>Click the keys to play</b>You can also use your keyboard<br>White keys · A S D F G H J K L ; '<br>Black keys · W E T Y U O P<br>Octave down · Z &nbsp; up · X" })[state.lang], 5200);
+        en: "<b>Click the keys to play</b>You can also use your keyboard<br>White keys · A S D F G H J K L ; '<br>Black keys · W E T Y U O P<br>Octave down · Z &nbsp; up · X" })[state.lang], 5200, true);
 }
 async function standPiano(){
   if (!pianoOn || camMode === "tween") return;
@@ -5047,7 +5052,11 @@ function stairStep(i, n){
 /* ---------- mobile pass: header fits in every language, cards don't clip, overlays size to their text ---------- */
 (function(){
   const st = document.createElement("style"); st.id = "mobileFix"; st.textContent = `
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+  button,a,#stage{-webkit-tap-highlight-color:transparent}
   #toast{width:max-content}
+  #toast.low{top:auto!important;bottom:calc(92px + env(safe-area-inset-bottom,0px));transform:translate(-50%,0) scale(.96)!important}
+  #toast.low.on{transform:translate(-50%,0) scale(1)!important}
   #toast b{white-space:normal}
   #lookHint{width:max-content;max-width:min(86vw,360px)}
   #welcome .d360{position:relative;width:96px;height:26px;margin:0 auto 8px}
@@ -5087,7 +5096,8 @@ function stairStep(i, n){
 
 /* ---------- the music sheet on the piano: "Ye — Runaway", hand-scribbled (made-up notes, just for the look) ---------- */
 function musicSheetTexture(){
-  const c = cnv(1152, 800, (g, w, h) => {
+  const c = cnv(2048, 1422, (g, W, H) => {
+    g.scale(2048 / 1152, 1422 / 800); const w = 1152, h = 800;
     const r = rnd(808);
     g.fillStyle = "#f2ead8"; g.fillRect(0, 0, w, h);
     const pg = g.createRadialGradient(w * .3, h * .2, 50, w * .5, h * .5, w * .8); pg.addColorStop(0, "rgba(255,255,255,.35)"); pg.addColorStop(1, "rgba(120,90,50,.12)"); g.fillStyle = pg; g.fillRect(0, 0, w, h);
@@ -5117,10 +5127,10 @@ function musicSheetTexture(){
       // brace + a pencilled note in the margin
       g.strokeStyle = ink; g.lineWidth = 3; g.beginPath(); g.moveTo(62, top); g.quadraticCurveTo(48, top + 70, 62, top + 144); g.stroke();
       if (si === 1){ g.textAlign = "center"; g.save(); g.translate(w / 2, top + 64); g.rotate(-.03);
-        g.fillStyle = "#f3ecdc"; g.beginPath(); g.moveTo(-330, -58); g.lineTo(330, -52); g.lineTo(326, 84); g.lineTo(-326, 80); g.closePath(); g.fill();
+        g.fillStyle = "#fbf5e6"; g.beginPath(); g.moveTo(-372, -66); g.lineTo(372, -60); g.lineTo(368, 94); g.lineTo(-368, 90); g.closePath(); g.fill(); g.strokeStyle = "rgba(43,38,34,.18)"; g.lineWidth = 2; g.stroke();
         g.fillStyle = "rgba(214,196,150,.8)"; g.fillRect(-46, -70, 92, 22); g.fillStyle = "rgba(168,53,43,.9)";
-        g.font = '400 54px "Caveat", "Nanum Pen Script", cursive'; g.fillText("follow the glowing keys ✦", 0, 0);
-        g.font = '400 44px "Nanum Pen Script", "Caveat", cursive'; g.fillText("빛나는 건반을 따라 쳐 보세요", 0, 58); g.restore(); g.textAlign = "left"; }
+        g.fillStyle = "#8f2219"; g.font = '700 62px "Caveat", "Nanum Pen Script", cursive'; g.fillText("follow the glowing keys ✦", 0, 2);
+        g.font = '700 54px "Nanum Pen Script", "Caveat", cursive'; g.fillText("빛나는 건반을 따라 쳐 보세요", 0, 62); g.restore(); g.textAlign = "left"; }
     });
     g.fillStyle = "rgba(43,38,34,.55)"; g.font = '400 22px "IBM Plex Mono", monospace'; g.textAlign = "right"; g.fillText("JEYA SOUND · B1", w - 60, h - 30);
   });
@@ -5134,7 +5144,7 @@ function musicSheetTexture(){
    ========================================================= */
 const EGG = {
   title: "Ye — Runaway",
-  notes: ["E6", "E6", "E6", "E5", "D#6", "D#6", "D#6", "D#5", "C#6", "C#6", "C#6", "C#5", "A5", "A5", "G#5", "E6"],                 // ← secret sequence goes here
+  notes: [],                 // ← secret sequence goes here
   audio: "audio/egg_runaway.mp3",   // the clip that plays when it triggers
   spotify: ""                // optional: https://open.spotify.com/track/... (shown as a link on the card)
 };
@@ -5157,11 +5167,23 @@ function eggGlow(){
   const seq = eggSeq(); if (!seq.length || !pianoOn || (window.EGGP && EGGP.on)) return;
   const k = PIANO.keys[seq[eggStep]]; if (!k) return;
   const black = k.y > .735;
-  EGLOW.w = EGLOW.w || new THREE.MeshStandardMaterial({ color: 0xfff1d6, roughness: .3, emissive: 0xffb45a, emissiveIntensity: .5 });
-  EGLOW.b = EGLOW.b || new THREE.MeshStandardMaterial({ color: 0x2a1c10, roughness: .3, emissive: 0xffa040, emissiveIntensity: .5 });
+  // mint, so it can't blend into the white keys; plus a small glowing marker bobbing just above the key
+  EGLOW.w = EGLOW.w || new THREE.MeshStandardMaterial({ color: 0x2fc391, roughness: .4, emissive: 0x18b07e, emissiveIntensity: 1 });
+  EGLOW.b = EGLOW.b || new THREE.MeshStandardMaterial({ color: 0x18a374, roughness: .35, emissive: 0x2ee0a4, emissiveIntensity: 1 });
   EGLOW.base = k.m.material; EGLOW.cur = k.m; k.m.material = black ? EGLOW.b : EGLOW.w;
+  if (!EGLOW.mk){
+    const mm = new THREE.MeshBasicMaterial({ color: 0x5ff0bf, toneMapped: false });
+    EGLOW.mk = new THREE.Group(); PIANO.group.add(EGLOW.mk);
+    mesh(new THREE.ConeGeometry(.016, .032, 4), mm, EGLOW.mk, 0, 0, 0, { rx: Math.PI, cast: false, receive: false });
+    const halo = new THREE.MeshBasicMaterial({ color: 0x5ff0bf, toneMapped: false, transparent: true, opacity: .28, depthWrite: false });
+    mesh(new THREE.SphereGeometry(.026, 16, 12), halo, EGLOW.mk, 0, .004, 0, { cast: false, receive: false });
+  }
+  EGLOW.mk.visible = true; EGLOW.mk.position.set(k.m.position.x, k.y + .065, k.m.position.z + (black ? 0 : .03)); EGLOW.mkY = EGLOW.mk.position.y;
 }
-function eggGlowTick(t){ const m = EGLOW.cur && EGLOW.cur.material; if (m && m.emissiveIntensity != null) m.emissiveIntensity = .25 + .55 * (.5 + .5 * Math.sin(t * 4)); }
+function eggGlowTick(t){
+  const m = EGLOW.cur && EGLOW.cur.material; if (m && m.emissiveIntensity != null) m.emissiveIntensity = .5 + .9 * (.5 + .5 * Math.sin(t * 4));
+  if (EGLOW.mk){ EGLOW.mk.visible = !!EGLOW.cur; if (EGLOW.cur) EGLOW.mk.position.y = EGLOW.mkY + Math.abs(Math.sin(t * 3.2)) * .014; }
+}
 function eggPop(){
   let o = $("#eggCard");
   if (!o){
@@ -5188,10 +5210,12 @@ addEventListener("keydown", ev => { if (ev.key === "Escape" && $("#eggCard") && 
 
 // frame two full octaves C4–C6 (E5 comfortably in view) on any screen shape
 function pianoView(){
-  const cx = -.648 + 22.5 * .036;                       // centre of white keys C4…E6 (piano-local x)
-  const fov = portrait() ? 60 : 50, aspect = innerWidth / Math.max(1, innerHeight);
-  const tanH = Math.tan(fov * Math.PI / 360) * aspect, dist = Math.max(.55, .345 / tanH), tilt = .72;
-  return { pos: pianoLocal(cx, .76 + dist * Math.sin(tilt), .5 + dist * Math.cos(tilt)), tgt: pianoLocal(cx, .8, .5), fov, roll: 0 };
+  // phones: a tighter view (F4…F6) so keys and the sheet are big enough to read and hit; wide screens: C4…E6
+  const cx = -.648 + 22.5 * .036, P = portrait();
+  const fov = P ? 60 : 50, aspect = innerWidth / Math.max(1, innerHeight);
+  const tanH = Math.tan(fov * Math.PI / 360) * aspect, dist = Math.max(P ? .5 : .8, (P ? .23 : .345) / tanH), tilt = P ? .42 : .46;
+  const base = P ? .84 : .86;
+  return { pos: pianoLocal(cx, base + dist * Math.sin(tilt), .5 + dist * Math.cos(tilt)), tgt: pianoLocal(cx, P ? .86 : .88, .5), fov, roll: 0 };
 }
 addEventListener("resize", () => { if (pianoOn && camMode === "piano") Object.assign(cam, pianoView()); });
 
@@ -5247,6 +5271,12 @@ function eggCard(){
     #eggCard .eq span:nth-child(2){animation-delay:-.3s}#eggCard .eq span:nth-child(3){animation-delay:-.6s}#eggCard .eq span:nth-child(4){animation-delay:-.15s}#eggCard .eq span:nth-child(5){animation-delay:-.45s}
     #eggCard .eq b{margin-left:10px;font-family:var(--f-mono);font-size:.62rem;letter-spacing:.2em;color:#7a6a58;font-weight:400;align-self:center}
     @keyframes eqb{0%,100%{height:6px}50%{height:24px}}`; document.head.appendChild(st); }
+}
+
+function sharpenTextures(){
+  let mx = 4; try { mx = Math.min(8, renderer.capabilities.getMaxAnisotropy()); } catch(e){}
+  const seen = new Set();
+  scene.traverse(o => { if (!o.isMesh) return; (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { if (!m) return; ["map", "bumpMap", "roughnessMap"].forEach(k => { const t = m[k]; if (t && !seen.has(t)){ seen.add(t); if ((t.anisotropy || 1) < mx){ t.anisotropy = mx; t.needsUpdate = true; } } }); }); });
 }
 
 </script>
