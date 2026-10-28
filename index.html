@@ -3068,9 +3068,12 @@ function buildLookExtras(rec){
   // the client's chosen album covers, pasted up like posters (square, torn edges, a little paper wear)
   const PS = .56, GAP = .06;
   for (let k = 0; k < 3; k++){
-    const disc = (ENGINEERS.find(e => e.status === "active") || {}).discography || [], idx = (k + rec.R.i * 3) % Math.max(1, disc.length), x = .22 - (2 - k) * (PS + GAP);      // clear of the narrow front window (x -2.06…-1.56)
-    if (!disc.length) continue;
-    const pm = mesh(new THREE.PlaneGeometry(PS, PS), mat({ map: discoPoster(disc[idx], idx), roughness: .75 }), L0.c, x, 1.3, z + .004, { cast: false });
+    // each room's three posters show that room's own engineer's first three releases (left → right);
+    // a room with no engineer yet (or no discography) leaves its posters bare.
+    const slot = rec.R.i, eng = rec.e;
+    const disc = rec.active && eng ? (eng.discography || []) : [], x = .22 - (2 - k) * (PS + GAP);      // clear of the narrow front window (x -2.06…-1.56)
+    if (!disc[k]) continue;
+    const pm = mesh(new THREE.PlaneGeometry(PS, PS), mat({ map: discoPoster(disc[k], slot ? slot * 100 + k : k), roughness: .75 }), L0.c, x, 1.3, z + .004, { cast: false });
 
   }
   const sten = new THREE.Group(); rec.win.hinge.add(sten);
@@ -3814,9 +3817,9 @@ addEventListener("keydown", ev => { if (ev.key === "Escape" && guideOut) putGuid
 
 /* ---------- discography covers: one source for the panel and the room's wall posters ----------
    To use real artwork, give a discography entry  cover: "images/your-cover.jpg"  — both update. */
-const _covers = [];
+const _covers = {};
 function discoCover(d, i){
-  if (_covers[i]) return _covers[i];
+  const key = i + "|" + d.title + "|" + (d.cover || ""); if (_covers[key]) return _covers[key];
   const c = cnv(512, 512, (q, w, h) => {
     const P = [["#c8482a", "#f1e2c4"], ["#1f3550", "#e3b56a"], ["#e0b052", "#2b211a"], ["#5f6b45", "#f1e6d0"], ["#7a3a2c", "#f3c98f"], ["#2b211a", "#d9a441"]][i % 6];
     q.fillStyle = P[0]; q.fillRect(0, 0, w, h); q.fillStyle = P[1]; q.globalAlpha = .9;
@@ -3830,7 +3833,7 @@ function discoCover(d, i){
   const t = tex(c); t.anisotropy = 8;
   const rec = { canvas: c, tex: t, url: c.toDataURL("image/jpeg", .86) };
   if (d.cover){ const img = new Image(); img.onload = () => { const g = c.getContext("2d"); g.imageSmoothingQuality = "high"; g.drawImage(img, 0, 0, 512, 512); t.needsUpdate = true; rec.url = d.cover; }; img.src = d.cover; }
-  return (_covers[i] = rec);
+  return (_covers[key] = rec);
 }
 // the room's wall pieces (were gold-record plaques) now show the discography covers, framed
 function goldRecord(parent, x, y, z, ry, d, k){
