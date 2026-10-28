@@ -1681,14 +1681,14 @@ let loungeLamp;
    ========================================================= */
 let labels = [], hemi, fill, inLights = [], view = "seated", busy = false;
 const DOOR_OPEN = -1.6;
-const Q = (() => { const lite = mobile() || (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 4; return { lite, pr: Math.min(devicePixelRatio || 1, mobile() ? 2 : (lite ? 1.25 : 1.5)), shadow: lite ? 1024 : 2048 }; })();
+const Q = (() => { const lite = mobile() || (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 4; return { lite, pr: Math.min(devicePixelRatio || 1, mobile() ? 2 : (lite ? 1.25 : 1.5)), shadow: 1024 }; })();
 function initThree(){
   renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
   renderer.setPixelRatio(Q.pr);
   renderer.setSize(innerWidth, innerHeight);
   renderer.outputEncoding = THREE.sRGBEncoding;
   renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.08;
-  renderer.shadowMap.enabled = true; renderer.shadowMap.type = Q.lite ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap; renderer.shadowMap.autoUpdate = false;
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFShadowMap; renderer.shadowMap.autoUpdate = false;
   $("#stage").appendChild(renderer.domElement);
   scene = new THREE.Scene(); scene.background = new THREE.Color(0x2a1d14);
   camera = new THREE.PerspectiveCamera(36, innerWidth / innerHeight, .03, 120); scene.add(camera);
@@ -2049,6 +2049,7 @@ function placeOverlay(){
 let frameErr = false;
 function frame(now){
   requestAnimationFrame(frame);
+  if (!frameDue(now)) return;
   try { step(now); } catch(err){ if (!frameErr){ frameErr = true; console.error(err); const d = document.createElement("div"); d.id = "loading"; d.className = "err"; d.textContent = "3D 화면 오류: " + err.message; document.body.appendChild(d); } }
 }
 function step(now){
@@ -2070,7 +2071,7 @@ function step(now){
   // the expensive extras (lens, shadows) before ever lowering sharpness, which never drops below 1.5x there
   { const dtp = now - (perf.last || now); perf.last = now; if (dtp < 250 && now > (perf.t0 || (perf.t0 = now + 4000))){ perf.acc += dtp; perf.n++; } }
   if (perf.n >= 120){ const avg = perf.acc / perf.n; perf.acc = 0; perf.n = 0;
-    perf.slow = avg > 28 ? (perf.slow || 0) + 1 : 0;
+    perf.slow = avg > Math.max(28, (perf.iv || 16.7) * 1.4) ? (perf.slow || 0) + 1 : 0;
     if (perf.slow >= 2){ perf.slow = 0; const floor = mobile() ? 1.5 : 1;
       if (FX.on) FX.on = false;
       else if ((perf.se || 0) < 8) perf.se = (perf.se || (mobile() ? 4 : 2)) * 2;
@@ -2336,7 +2337,7 @@ document.addEventListener("keydown", ev => {
   } catch(err){ const l = $("#loading"); l.classList.add("err"); l.textContent = "3D 화면을 만드는 중 문제가 생겼어요: " + err.message; console.error(err); return; }
   const grainC = cnv(128, 128, (g, w, h) => { const r = rnd(500); for (let i = 0; i < 3600; i++){ g.fillStyle = r() < .5 ? `rgba(0,0,0,${r()*.55})` : `rgba(255,255,255,${r()*.45})`; g.fillRect(r()*w, r()*h, 1, 1); } });
   $("#grain").style.background = `url(${grainC.toDataURL()}) 0 0 / 128px 128px repeat`;
-  applyLang(); bgmAutostart();
+  applyLang();
   { let lk = "c"; try { lk = new URLSearchParams(location.search).get("look") || "c"; } catch(e){} applyLook(lk); }
   Object.assign(cam, hallView());
   // warm-up while the loading screen is still up: compile every shader and upload every texture now,
@@ -2355,7 +2356,7 @@ document.addEventListener("keydown", ev => {
   const h = location.hash.slice(1);
   if (h && ENGINEERS.some(e => e.id === h)){ finishIntro(); enterRoom(h, true); }
   else if (h === "hall" || reduce) finishIntro();
-  else playIntro();
+  else enterGate(() => playIntro());
   store("jeya-visited", "1");
   buildSeo();
 })();
@@ -2861,6 +2862,7 @@ function placeDesk(){
 /* ---------- cursor lens: the scene swells softly under the mouse ---------- */
 const FX = { on: false, rt: null, scene: null, cam: null, mat: null, m: new THREE.Vector2(.5, .5), tm: new THREE.Vector2(.5, .5), s: 0, boost: 0, over: false, size: new THREE.Vector2() };
 function initFX(){
+  return;                     // cursor lens off everywhere: it doubled the GPU work for a subtle effect (battery / heat)
   if (Q.lite || reduce || !matchMedia("(hover: hover) and (pointer: fine)").matches) return;
   const gl2 = renderer.capabilities.isWebGL2, fl = gl2 && (renderer.extensions.has("EXT_color_buffer_float") || renderer.extensions.has("EXT_color_buffer_half_float"));
   FX.rt = new THREE.WebGLRenderTarget(2, 2, { type: fl ? THREE.HalfFloatType : THREE.UnsignedByteType, samples: gl2 ? 4 : 0 });
@@ -4025,7 +4027,9 @@ function bgmTick(){
   if (pianoOn) g *= .22;
   if (window.EGGP && EGGP.on) g = 0;                               // sitting at the piano: the lobby music steps way back             // headphones on (or Before / After playing): the lobby music fades away
   const t = BGM.g.context.currentTime;
-  BGM.g.gain.setTargetAtTime(g * BGM_LEVEL, t, g === 0 ? .35 : .3); BGM.lp.frequency.setTargetAtTime(f, t, .3);
+  // only touch the audio graph when something actually changed (scheduling every frame kept the audio thread busy)
+  if (BGM.lastG == null || Math.abs(g - BGM.lastG) > .002){ BGM.lastG = g; BGM.g.gain.setTargetAtTime(g * BGM_LEVEL, t, g === 0 ? .35 : .3); }
+  if (BGM.lastF == null || Math.abs(f - BGM.lastF) > 25){ BGM.lastF = f; BGM.lp.frequency.setTargetAtTime(f, t, .3); }
   // the speaker cones breathe with the music
   if (BGM.cones.length){ const a = new Uint8Array(BGM.an.fftSize); BGM.an.getByteTimeDomainData(a); let m = 0; for (let i = 0; i < a.length; i += 4) m = Math.max(m, Math.abs(a[i] - 128)); const s = 1 + Math.min(1, m / 20) * .06; BGM.cones.forEach(c => c.scale.set(s, s, 1)); }
 }
@@ -4622,7 +4626,7 @@ function retroTV(){
   tvScreen = { c, t: sTex, glow, last: 0, crowd: Array.from({ length: 22 }, (_, i) => ({ x: i / 21, s: .75 + Math.random() * .5, p: Math.random() * 6 })) };
 }
 function drawTV(t){
-  if (!tvScreen || state.mode !== "hall" || t - tvScreen.last < .1) return; tvScreen.last = t;
+  if (!tvScreen || state.mode !== "hall" || t - tvScreen.last < .15) return; tvScreen.last = t;
   const { c, crowd } = tvScreen, g = c.getContext("2d"), w = 640, h = 360, beat = t * Math.PI * 2 * (88 / 60);
   g.setTransform(c.width / 640, 0, 0, c.height / 360, 0, 0);
   // stage: deep purple haze
@@ -5155,7 +5159,7 @@ function musicSheetTexture(withTitle){
    ========================================================= */
 const EGG = {
   title: "Ye — Runaway",
-  notes: ["E6", "E6", "E6", "E5", "D#6", "D#6", "D#6", "D#5", "C#6", "C#6", "C#6", "C#5", "A5", "A5", "G#5", "E6"],                 // ← secret sequence goes here
+  notes: [],                 // ← secret sequence goes here
   audio: "audio/egg_runaway.mp3",   // the clip that plays when it triggers
   spotify: ""                // optional: https://open.spotify.com/track/... (shown as a link on the card)
 };
@@ -5289,6 +5293,56 @@ function sharpenTextures(){
   let mx = 4; try { mx = Math.min(8, renderer.capabilities.getMaxAnisotropy()); } catch(e){}
   const seen = new Set();
   scene.traverse(o => { if (!o.isMesh) return; (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { if (!m) return; ["map", "bumpMap", "roughnessMap"].forEach(k => { const t = m[k]; if (t && !seen.has(t)){ seen.add(t); if ((t.anisotropy || 1) < mx){ t.anisotropy = mx; t.needsUpdate = true; } } }); }); });
+}
+
+/* =========================================================
+   ENTRY GATE — one click/tap to come in (unlocks sound on every device, so music starts with the stairs)
+   ========================================================= */
+let gateOn = false;
+function enterGate(go){
+  if (window.__NOGATE){ go(); return; }      // automated checks only
+  gateOn = true;
+  const el = document.createElement("div"); el.id = "gate"; document.body.appendChild(el);
+  const st = document.createElement("style"); st.textContent = `
+    #gate{position:fixed;inset:0;z-index:200;display:grid;place-items:center;background:radial-gradient(70% 60% at 50% 45%,#2a1f17,#120d0a);cursor:pointer;transition:opacity .6s}
+    #gate.out{opacity:0;pointer-events:none}
+    #gate .gp{position:relative;width:min(84vw,360px);padding:38px 26px 28px;text-align:center;color:#241c15;transform:rotate(-1.6deg);filter:drop-shadow(0 18px 26px rgba(0,0,0,.6));transition:transform .25s cubic-bezier(.3,1.6,.5,1)}
+    #gate:hover .gp{transform:rotate(1deg) scale(1.03)}
+    #gate .gp::before{content:"";position:absolute;inset:0;z-index:-1;background:#ece2cb;clip-path:var(--tear);background-image:radial-gradient(120% 90% at 20% 0,rgba(255,255,255,.45),transparent 60%),repeating-linear-gradient(0deg,transparent 0 27px,rgba(42,34,26,.07) 27px 28px)}
+    #gate .tape{position:absolute;left:50%;top:-9px;width:92px;height:26px;margin-left:-46px;background:rgba(214,196,150,.85);transform:rotate(3deg);clip-path:polygon(0 15%,8% 0,92% 10%,100% 0,96% 100%,88% 85%,10% 100%,3% 88%)}
+    #gate .lg{width:58px;height:62px;margin:0 auto 6px}
+    #gate .lg svg{width:58px!important;height:62px!important;margin:0!important}
+    #gate .k{font-family:var(--f-mono);font-size:.66rem;letter-spacing:.24em;color:#7a6a58}
+    #gate h2{margin:10px 0 2px;animation:gpulse 1.8s ease-in-out infinite;font-family:"Nanum Pen Script","Yomogi","Caveat",cursive;font-weight:400;font-size:2.6rem;line-height:1;color:#1f2f5a}
+    #gate p{margin:0;font-size:.84rem;color:#5b5248}
+    #gate .pulse{display:inline-block;margin-top:14px;padding:11px 26px;background:#a8352b;color:#fff6ea;font-family:var(--f-display);font-weight:800;font-size:.98rem;clip-path:polygon(0 8%,4% 0,30% 6%,52% 0,78% 5%,100% 0,98% 50%,100% 94%,74% 100%,50% 94%,24% 100%,2% 95%,0 50%);animation:gpulse 1.8s ease-in-out infinite}
+    @keyframes gpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}`;
+  document.head.appendChild(st);
+  const touch = matchMedia("(hover: none)").matches, lang = state.lang;
+  const T = { ko: [touch ? "탭해서 입장" : "클릭해서 입장", "소리와 함께 들어와 주세요 🎧", "들어가기"], ja: [touch ? "タップして入場" : "クリックして入場", "サウンドと一緒にどうぞ 🎧", "入る"], en: [touch ? "Tap to enter" : "Click to enter", "Best with sound on 🎧", "Enter"] }[lang] || [];
+  const logo = (document.querySelector(".brand .lp-logo") || {}).outerHTML || "";
+  el.innerHTML = `<div class="gp" style="--tear:${tearPath(97)}"><span class="tape"></span><div class="lg">${logo.replace('class="lp-logo"', 'class="lp-logo" style="width:58px;height:62px;filter:none"').replace(/#f1ebdf/g, "#1f2f5a")}</div><h2>${touch ? "Tap to Enter" : "Click to Enter"}</h2></div>`;
+  const enter = () => {
+    if (!gateOn) return; gateOn = false;
+    try { if (BGM.user !== "off") bgmStart(); } catch(e){}
+    try { sfx && sfx.click && sfx.click(); } catch(e){}
+    el.classList.add("out"); setTimeout(() => el.remove(), 700);
+    go();
+  };
+  el.addEventListener("click", enter);
+  addEventListener("keydown", function k(ev){ if (gateOn && (ev.key === "Enter" || ev.key === " ")){ ev.preventDefault(); removeEventListener("keydown", k); enter(); } });
+}
+
+/* ---------- frame pacing: 60fps only while something is moving, 30fps otherwise, 15fps after a minute of no input ---------- */
+let lastR = 0, lastInput = performance.now();
+["pointerdown", "pointermove", "keydown", "wheel", "touchstart"].forEach(e => addEventListener(e, () => { lastInput = performance.now(); }, { passive: true, capture: true }));
+function frameDue(now){
+  if (gateOn){ if (now - lastR < 500) return false; lastR = now; return true; }
+  const active = tweens.length > 0 || !!drag || camMode === "tween" || (PLAYER.pos && (PLAYER.goal || Object.values(PLAYER.keys).some(Boolean))) || (window.EGGP && EGGP.on) || document.body.classList.contains("dragging");
+  const iv = active ? 0 : (now - lastInput > 60000 ? 66 : 33);
+  perf.iv = iv || 16.7;
+  if (now - lastR < iv - 3) return false;
+  lastR = now; return true;
 }
 
 </script>
