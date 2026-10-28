@@ -58,7 +58,7 @@
     ]
   },
   "rates": {
-    "mix": 300000,
+    "mix": 350000,
     "master": 80000,
     "mixmaster": 350000
   },
@@ -86,25 +86,25 @@
       "cover": ""
     },
     {
-      "year": 2025,
-      "artist": "Sample Artist",
-      "title": "Afterglow",
-      "role": "Master",
-      "cover": ""
-    },
-    {
-      "year": 2024,
-      "artist": "Sample Crew",
-      "title": "Basement Tapes",
-      "role": "Rec · Mix · Master",
-      "cover": ""
-    },
-    {
-      "year": 2024,
-      "artist": "Sample Artist",
-      "title": "Blue Hour",
+      "year": 2023,
+      "artist": "The Atomic",
+      "title": "잠수 (prod. The Atomic) / Youth",
       "role": "Mix",
       "cover": ""
+    },
+    {
+      "year": 2023,
+      "artist": "The Atomic",
+      "title": "Midnight Cherryblossom (prod. The Atomic) / Youth",
+      "role": "Mix",
+      "cover": "covers/mvscii98-the-atomic_youth.jpg"
+    },
+    {
+      "year": 2022,
+      "artist": "Entoy",
+      "title": "Blue mood (Feat. suru) / Lost mood",
+      "role": "Master",
+      "cover": "covers/mvscig09-entoy_bluemood.jpg"
     }
   ],
   "artists": [
