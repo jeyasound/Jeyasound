@@ -63,6 +63,11 @@ input:focus,textarea:focus{outline:2px solid rgba(31,47,90,.35);outline-offset:1
 .trih{margin-top:6px;font-size:.78rem;color:#8a5a3c;background:rgba(168,53,43,.07);border-radius:4px;padding:6px 8px}
 .trih .btn{margin:0 4px}
 .hidden{display:none!important}
+body{word-break:keep-all;overflow-wrap:anywhere}
+.hint,label,.trih,.savebar .st{text-wrap:pretty}
+textarea{white-space:pre-wrap;line-height:1.55}
+.photo-row{display:flex;align-items:flex-end;gap:12px}
+.cover.photo{width:110px;height:136px}
 @media (max-width:640px){
   .tri{grid-template-columns:1fr}
   .price{grid-template-columns:1fr}
@@ -71,6 +76,9 @@ input:focus,textarea:focus{outline:2px solid rgba(31,47,90,.35);outline-offset:1
   .disc .f .wide{grid-column:span 2}
   .gear{grid-template-columns:1fr 1fr auto}
   .card{padding:24px 16px 18px}
+  .savebar{gap:10px;padding-left:12px;padding-right:12px}
+  .savebar .st{font-size:.8rem;flex:1;min-width:0}
+  .savebar .btn{padding:12px 18px;flex:none}
 }
 </style>
 </head>
@@ -91,11 +99,12 @@ input:focus,textarea:focus{outline:2px solid rgba(31,47,90,.35);outline-offset:1
   <section class="card">
     <h2>프로필</h2>
     <p class="hint">한국어만 채워도 돼요. 일본어 · 영어 칸을 비워 두면 그 언어 화면에도 한국어가 나와요.</p>
+    <label>프로필 사진 <small>(누르면 올릴 수 있어요 · 세로 사진이 잘 어울려요)</small></label>
+    <div class="photo-row"><div class="cover photo" id="e_photo">사진 올리기</div><button class="btn ghost sm hidden" id="noPhoto">사진 빼기</button></div>
     <label>이름</label><input type="text" id="e_name">
     <label>역할 <small>(예: 믹싱 · 마스터링 엔지니어)</small></label><div class="tri" id="e_role"></div>
     <label>소개 글</label><div class="tri" id="e_bio" data-area="1"></div>
     <label>작업 방식 <small>(예: 온라인 · 오프라인 세션 모두 가능)</small></label><div class="tri" id="e_session"></div>
-    <label>장르 <small>(쉼표로 구분)</small></label><div class="tri" id="e_genres"></div>
     <label>장비</label><div id="gear"></div>
     <button class="btn ghost sm" id="addGear">+ 장비 추가</button>
   </section>
@@ -184,8 +193,7 @@ input:focus,textarea:focus{outline:2px solid rgba(31,47,90,.35);outline-offset:1
     tri($("#e_role"), e.role, false, o => e.role = o);
     tri($("#e_bio"), e.bio, true, o => e.bio = o);
     tri($("#e_session"), e.session, false, o => e.session = o);
-    const gj = {}; LANGS.forEach(([l]) => gj[l] = ((e.genres || {})[l] || []).join(", "));
-    tri($("#e_genres"), gj, false, o => { e.genres = {}; LANGS.forEach(([l]) => e.genres[l] = (o[l] || "").split(",").map(s => s.trim()).filter(Boolean)); });
+    renderPhoto();
     renderGear();
     ["mix", "master", "mixmaster"].forEach(k => { const i = $("#r_" + k); i.value = C.rates[k] || ""; i.oninput = () => { C.rates[k] = Math.max(0, Math.round(+i.value || 0)); touch(); }; });
     $("#discOpen").checked = !!C.discographyOpen; $("#discOpen").onchange = ev => { C.discographyOpen = ev.target.checked; touch(); };
@@ -224,10 +232,28 @@ input:focus,textarea:focus{outline:2px solid rgba(31,47,90,.35);outline-offset:1
   };
   $("#addDisc").onclick = () => { C.discography.unshift({ year: new Date().getFullYear(), artist: "", title: "", role: "Mix", cover: "" }); Object.keys(previews).forEach(k => delete previews[k]); renderDiscs(); touch(); };
 
+  let photoPreview = "";
+  function renderPhoto(){
+    const e = C.engineer, u = photoPreview || (e.photo ? "/" + e.photo : "");
+    $("#e_photo").style.backgroundImage = u ? `url('${u.replace(/'/g, "%27")}')` : ""; $("#e_photo").textContent = u ? "" : "사진 올리기";
+    $("#noPhoto").classList.toggle("hidden", !e.photo);
+  }
+  $("#e_photo").onclick = () => pickCover(-2);
+  $("#noPhoto").onclick = () => { C.engineer.photo = ""; photoPreview = ""; renderPhoto(); touch(); };
   let coverFor = -1;
   function pickCover(i){ coverFor = i; $("#file").value = ""; $("#file").click(); }
   $("#file").onchange = async () => {
-    const f = $("#file").files[0]; if (!f || coverFor < 0) return;
+    const f = $("#file").files[0]; if (!f || coverFor === -1) return;
+    if (coverFor === -2){
+      setStatus("프로필 사진을 올리는 중…");
+      try {
+        const url = await shrink(f, 900); photoPreview = url; renderPhoto();
+        const j = await api("/api/upload", { name: "profile.jpg", data: url.split(",")[1] });
+        C.engineer.photo = j.path; renderPhoto(); touch();
+        setStatus("사진을 올렸어요. 저장을 눌러야 사이트에 반영돼요.");
+      } catch(e){ photoPreview = ""; renderPhoto(); setStatus("사진을 올리지 못했어요: " + e.message, true); }
+      return;
+    }
     const i = coverFor; setStatus("커버를 올리는 중…");
     try {
       const url = await shrink(f, 1000);
