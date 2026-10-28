@@ -123,7 +123,7 @@
       "credit": "Mix",
       "spotify": "",
       "intro": {
-        "ko": "안녕, 난 ARTIST 02야. 내 노래 들어볼래?",
+        "ko": "안녕, 난 ARTIST 02야",
         "ja": "やあ、ARTIST 02だよ。僕の曲、聴いてみる?",
         "en": "Hi, I'm ARTIST 02. Wanna hear my song?"
       }
@@ -133,7 +133,7 @@
       "credit": "Mix · Master",
       "spotify": "",
       "intro": {
-        "ko": "안녕, 난 ARTIST 03이야. 내 노래 들어볼래?",
+        "ko": "안녕, 난 ARTIST 03이야",
         "ja": "やあ、ARTIST 03だよ。私の曲、聴いてみる?",
         "en": "Hi, I'm ARTIST 03. Wanna hear my song?"
       }
@@ -143,13 +143,30 @@
       "credit": "Master",
       "spotify": "",
       "intro": {
-        "ko": "안녕, 난 ARTIST 04야. 내 노래 들어볼래?",
+        "ko": "안녕, 난 ARTIST 04야",
         "ja": "こんにちは、ARTIST 04です。私の曲、聴いてみる?",
         "en": "Hi, I'm ARTIST 04. Wanna hear my song?"
       }
     }
   ],
   "easterEgg": {
-    "notes": []
+    "notes": [
+      "E6",
+      "E6",
+      "E6",
+      "E5",
+      "D#6",
+      "D#6",
+      "D#6",
+      "D#5",
+      "C#6",
+      "C#6",
+      "C#6",
+      "C#5",
+      "A5",
+      "A5",
+      "G#5",
+      "E6"
+    ]
   }
 }
