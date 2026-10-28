@@ -2370,7 +2370,7 @@ function buildSeo(){
   dyn.innerHTML = `
     <h2>${esc(e.name)} · ${esc(tr(e.role))}</h2>
     <p>${esc(tr(e.bio))}</p>
-    <p>${esc(t.genres)}: ${tr(e.genres).map(esc).join(", ")} · ${esc(t.sessionLbl)}: ${esc(tr(e.session))}</p>
+    <p>${esc(t.sessionLbl)}: ${esc(tr(e.session))}</p>
     <h3>${esc(t.tRates)}</h3>
     <ul>${rows.map(q => `<li>${esc(t[q.k])}: ${priceTxt(q)} ${q.unit ? esc(t[q.unit]) : ""} (${esc(tr(q.inc))}${q.alt ? " · " + esc(tr(q.alt)) : ""})</li>`).join("")}</ul>
     <h3>${esc(t.tDisco)}</h3>
@@ -3640,16 +3640,16 @@ new MutationObserver(() => { if (!$("#book").classList.contains("on")) putContra
 function renderPanel(e){
   const t = L(), idx = ENGINEERS.indexOf(e) + 1;
   const titles = { about: t.tAbout, ba: "Before / After", rates: t.tRates, disco: t.tDisco, guide: "Stem guide" };
-  $("#panel").innerHTML = `<div class="sp-head"><div class="sp-meta"><span>${esc(e.status === "active" ? e.name : e.room)}</span><span>${esc(e.room)} · REEL ${String(idx).padStart(2, "0")}</span></div><div class="sp-tape">${esc(e.status === "active" ? (titles[state.tab] || "") : t.hiring)}</div></div><div class="p-body sp-body" id="pbody"></div>`;
+  $("#panel").innerHTML = `<div class="sp-head"><div class="sp-meta"><span>${esc(e.status === "active" ? e.name : "")}</span></div><div class="sp-tape">${esc(e.status === "active" ? (titles[state.tab] || "") : t.hiring)}</div></div><div class="p-body sp-body" id="pbody"></div>`;
   if (e.status !== "active"){ $("#pbody").innerHTML = `<div class="card"><p class="bio">${esc(t.hiringText)}</p></div>`; return; }
   renderTab(e);
 }
 function renderTab(e){
-  const t = L(), b = $("#pbody"); const tag = `<span class="sample">${t.sample}</span>`;
+  const t = L(), b = $("#pbody"); const tag = SITE_CONTENT ? "" : `<span class="sample">${t.sample}</span>`;
   if (state.tab === "about"){
-    const rows = [["ROLE", esc(tr(e.role))], [esc(t.genres).toUpperCase(), tr(e.genres).map(esc).join(" · ")], [esc(t.sessionLbl).toUpperCase(), esc(tr(e.session))], ["GEAR", e.gear.map(([k, v]) => esc(v)).join("<br>")]];
+    const rows = [["ROLE", esc(tr(e.role))], [esc(t.sessionLbl).toUpperCase(), esc(tr(e.session))], ["GEAR", e.gear.map(([k, v]) => esc(v)).join("<br>")]].filter(r => r[1]);
     b.innerHTML = `${tag}<div class="deck">
-      <div class="ba strip prof"><div class="reel"><i></i></div><div class="meta"><span class="tape-label">${esc(e.name)}</span><small>${esc(e.room)} · MIX / MASTER</small></div>
+      <div class="ba strip prof${e.photo ? " has-photo" : ""}">${e.photo ? `<div class="pf-photo"><img src="${esc(e.photo)}" alt="${esc(e.name)}" loading="lazy"><span class="pf-tape"></span></div>` : `<div class="reel"><i></i></div>`}<div class="meta"><span class="tape-label">${esc(e.name)}</span></div>
         <p class="prof-bio">${esc(tr(e.bio))}</p></div>
       <div class="rack">${rows.map(([k, v], i) => `<div class="unit"><span class="screw"></span><em class="led${i ? "" : " on"}"></em><span class="u-k">${k}</span><span class="u-v">${v}</span><span class="screw"></span></div>`).join("")}</div></div>`;
   } else if (state.tab === "ba"){
@@ -5066,6 +5066,14 @@ function stairStep(i, n){
   html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
   button,a,#stage{-webkit-tap-highlight-color:transparent}
   #toast{width:max-content}
+  .prof-bio,.u-v,.art-bub,#artistCard .cr,.panel p{white-space:pre-line;text-wrap:pretty}
+  html[lang=ko] .panel,html[lang=ko] .art-bub,html[lang=ko] #artistCard,html[lang=ko] #welcome,html[lang=ko] #toast{word-break:keep-all;overflow-wrap:anywhere}
+  html[lang=ja] .panel,html[lang=ja] .art-bub{line-break:strict}
+  .prof.has-photo{grid-template-columns:auto 1fr!important;align-items:center}
+  .pf-photo{position:relative;width:96px;height:112px;padding:6px 6px 18px;background:#f4ede0;transform:rotate(-3deg);box-shadow:0 8px 16px rgba(0,0,0,.45);flex:none}
+  .pf-photo img{display:block;width:100%;height:100%;object-fit:cover;filter:saturate(.92) contrast(1.02)}
+  .pf-tape{position:absolute;left:50%;top:-8px;width:46px;height:16px;margin-left:-23px;background:rgba(214,196,150,.85);transform:rotate(4deg)}
+  @media (max-width:640px){.pf-photo{width:82px;height:96px}}
   #welcome .wc-b{flex-direction:column!important;align-items:center!important;gap:10px!important}
   #welcome .wc-main{flex:none!important;width:100%;max-width:300px;padding:16px 20px 15px!important;font-size:1.12rem!important}
   #welcome .wc-ghost{font-size:1.2rem!important;padding:6px 10px!important;opacity:.85}
@@ -5362,6 +5370,7 @@ async function loadContent(){
     if (e && c.engineer){
       const g = c.engineer;
       if (g.name) e.name = String(g.name);
+      e.photo = g.photo ? String(g.photo) : "";
       if (L3(g.role)) e.role = L3(g.role);
       if (L3(g.bio)) e.bio = L3(g.bio);
       if (L3(g.session)) e.session = L3(g.session);
