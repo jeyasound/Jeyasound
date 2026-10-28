@@ -2326,6 +2326,7 @@ document.addEventListener("keydown", ev => {
 /* ---------- boot ---------- */
 (async function boot(){
   initLang();
+  await loadContent();
   if (!window.THREE){ const l = $("#loading"); l.classList.add("err"); l.textContent = "3D 화면을 불러오지 못했어요. 새로고침해 주세요."; return; }
   const fonts = ['900 30px "Archivo"','600 10px "IBM Plex Sans KR"','700 10px "IBM Plex Sans KR"','500 10px "IBM Plex Mono"','20px "Nanum Pen Script"','600 20px "Caveat"','20px "Yomogi"'];
   try { await Promise.race([Promise.all(fonts.map(f => document.fonts.load(f))), new Promise(r => setTimeout(r, 1500))]); } catch(e){}
@@ -4992,7 +4993,7 @@ async function standPiano(){
 
 /* ---------- discography: coming soon ---------- */
 { const op0 = openPanel; openPanel = function(tab){
-    if (tab === "disco"){ toast({ ko: "<b>디스코그래피</b>준비 중이에요", ja: "<b>ディスコグラフィ</b>準備中です", en: "<b>Discography</b>Coming soon" }[state.lang], 2200); return; }
+    if (tab === "disco" && !(SITE_CONTENT && SITE_CONTENT.discographyOpen)){ toast({ ko: "<b>디스코그래피</b>준비 중이에요", ja: "<b>ディスコグラフィ</b>準備中です", en: "<b>Discography</b>Coming soon" }[state.lang], 2200); return; }
     return op0.apply(this, arguments);
   }; }
 
@@ -5159,7 +5160,7 @@ function musicSheetTexture(withTitle){
    ========================================================= */
 const EGG = {
   title: "Ye — Runaway",
-  notes: ["E6", "E6", "E6", "E5", "D#6", "D#6", "D#6", "D#5", "C#6", "C#6", "C#6", "C#5", "A5", "A5", "G#5", "E6"],                 // ← secret sequence goes here
+  notes: [],                 // ← secret sequence goes here
   audio: "audio/egg_runaway.mp3",   // the clip that plays when it triggers
   spotify: ""                // optional: https://open.spotify.com/track/... (shown as a link on the card)
 };
@@ -5343,6 +5344,49 @@ function frameDue(now){
   perf.iv = iv || 16.7;
   if (now - lastR < iv - 3) return false;
   lastR = now; return true;
+}
+
+/* =========================================================
+   CONTENT FILE — content.json (edited from /admin) overrides the built-in texts at start-up.
+   If the file is missing or broken, the site simply uses the defaults written in this page.
+   ========================================================= */
+let SITE_CONTENT = null;
+async function loadContent(){
+  try {
+    const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 2500);
+    const r = await fetch("content.json?v=" + Date.now(), { cache: "no-store", signal: ctl.signal }); clearTimeout(to);
+    if (!r.ok) return; const c = await r.json(); if (!c || typeof c !== "object") return;
+    SITE_CONTENT = c;
+    const e = ENGINEERS.find(x => x.status === "active");
+    const L3 = v => v && typeof v === "object" && !Array.isArray(v) && (v.ko || v.ja || v.en) ? { ko: v.ko || v.en || v.ja || "", ja: v.ja || v.en || v.ko || "", en: v.en || v.ko || v.ja || "" } : null;
+    if (e && c.engineer){
+      const g = c.engineer;
+      if (g.name) e.name = String(g.name);
+      if (L3(g.role)) e.role = L3(g.role);
+      if (L3(g.bio)) e.bio = L3(g.bio);
+      if (L3(g.session)) e.session = L3(g.session);
+      if (g.genres && typeof g.genres === "object"){ const gg = {}; ["ko", "ja", "en"].forEach(l => { const v = g.genres[l] || g.genres.ko || g.genres.en; gg[l] = Array.isArray(v) ? v.map(String) : []; }); if (gg.ko.length) e.genres = gg; }
+      if (Array.isArray(g.gear)) e.gear = g.gear.filter(x => Array.isArray(x) && x[0]).map(x => [String(x[0]), String(x[1] || "")]);
+    }
+    if (e && c.rates && typeof c.rates === "object"){
+      (e.rates || []).forEach(rt => { const v = c.rates[rt.k]; if (typeof v === "number" && v > 0) rt.price = Math.round(v); });
+      const mix = (e.rates || []).find(rt => rt.k === "mix");
+      if (mix && mix.alt && mix.price){
+        const man = mix.price / 10000, wn = "₩" + mix.price.toLocaleString("en-US");
+        mix.alt = { ko: mix.alt.ko.replace(/[\d.]+만원/, man + "만원"), ja: mix.alt.ja.replace(/[\d.]+万ウォン/, man + "万ウォン"), en: mix.alt.en.replace(/₩[\d,]+/, wn) };
+      }
+    }
+    if (e && Array.isArray(c.discography)){
+      const list = c.discography.filter(d => d && d.title).map(d => ({ year: +d.year || "", artist: String(d.artist || ""), title: String(d.title), role: String(d.role || ""), cover: d.cover ? String(d.cover) : undefined }));
+      if (list.length) e.discography = list;
+    }
+    if (Array.isArray(c.artists)) c.artists.slice(0, ARTISTS.length).forEach((a, i) => {
+      if (!a) return; const A = ARTISTS[i];
+      if (a.name) A.name = String(a.name); if (a.credit != null) A.credit = String(a.credit); if (a.spotify != null) A.spotify = String(a.spotify);
+      if (L3(a.intro)) A.intro = L3(a.intro);
+    });
+    if (c.easterEgg && Array.isArray(c.easterEgg.notes) && c.easterEgg.notes.length) EGG.notes = c.easterEgg.notes.map(String);
+  } catch(err){ console.warn("content.json not used", err); }
 }
 
 </script>

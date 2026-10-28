@@ -1,0 +1,155 @@
+{
+  "version": 1,
+  "engineer": {
+    "name": "JEYA",
+    "role": {
+      "ko": "믹싱 · 마스터링 · 레코딩 엔지니어",
+      "ja": "ミキシング・マスタリング・レコーディングエンジニア",
+      "en": "Mixing, mastering & recording engineer"
+    },
+    "bio": {
+      "ko": "보컬의 질감과 저역의 균형을 가장 먼저 듣습니다. 곡이 원래 가진 감정을 해치지 않으면서, 스트리밍과 라이브 어디서든 같은 인상으로 들리도록 다듬는 것이 목표입니다.",
+      "ja": "まずボーカルの質感と低域のバランスを聴きます。曲が本来持つ感情を損なわず、ストリーミングでもライブでも同じ印象で届くように仕上げることを目指しています。",
+      "en": "I listen for vocal texture and low-end balance first. The goal is to keep the feeling the song already has, and make it land the same way on streaming services and on stage."
+    },
+    "genres": {
+      "ko": [
+        "R&B · 소울",
+        "힙합",
+        "인디 · 밴드"
+      ],
+      "ja": [
+        "R&B・ソウル",
+        "ヒップホップ",
+        "インディー・バンド"
+      ],
+      "en": [
+        "R&B / Soul",
+        "Hip-hop",
+        "Indie / Band"
+      ]
+    },
+    "session": {
+      "ko": "온라인 · 오프라인 세션 모두 가능",
+      "ja": "オンライン・オフライン両方対応",
+      "en": "Online and in-studio sessions"
+    },
+    "gear": [
+      [
+        "Monitors",
+        "JBL 705P"
+      ],
+      [
+        "Headphones",
+        "Audeze MM500"
+      ],
+      [
+        "DAC",
+        "RME ADI-2 DAC"
+      ],
+      [
+        "Controller",
+        "Avid Artist Fader"
+      ],
+      [
+        "DAW",
+        "Pro Tools"
+      ]
+    ]
+  },
+  "rates": {
+    "mix": 300000,
+    "master": 80000,
+    "mixmaster": 350000
+  },
+  "discographyOpen": false,
+  "discography": [
+    {
+      "year": 2026,
+      "artist": "Sample Artist",
+      "title": "Night Drive",
+      "role": "Mix · Master",
+      "cover": ""
+    },
+    {
+      "year": 2026,
+      "artist": "Sample Artist",
+      "title": "Paper Moon (EP)",
+      "role": "Rec · Mix",
+      "cover": ""
+    },
+    {
+      "year": 2025,
+      "artist": "Sample Band",
+      "title": "Static",
+      "role": "Mix",
+      "cover": ""
+    },
+    {
+      "year": 2025,
+      "artist": "Sample Artist",
+      "title": "Afterglow",
+      "role": "Master",
+      "cover": ""
+    },
+    {
+      "year": 2024,
+      "artist": "Sample Crew",
+      "title": "Basement Tapes",
+      "role": "Rec · Mix · Master",
+      "cover": ""
+    },
+    {
+      "year": 2024,
+      "artist": "Sample Artist",
+      "title": "Blue Hour",
+      "role": "Mix",
+      "cover": ""
+    }
+  ],
+  "artists": [
+    {
+      "name": "TREY",
+      "credit": "Mix · Master",
+      "spotify": "https://open.spotify.com/album/3NytaPbtK6PqQwDxNMPzcs?si=0a27e6c63dab4cfc",
+      "intro": {
+        "ko": "요. 갓 댐~ 난 자동차를 할부를 갚고있어. 나한테 돈 후원해줄 사람~?",
+        "ja": "よっ。ガッデム〜 車のローン返済中なんだ。俺に金を援助してくれる人〜?",
+        "en": "Yo. God damn~ I'm still paying off my car. Anybody wanna sponsor me~?"
+      }
+    },
+    {
+      "name": "ARTIST 02",
+      "credit": "Mix",
+      "spotify": "",
+      "intro": {
+        "ko": "안녕, 난 ARTIST 02야. 내 노래 들어볼래?",
+        "ja": "やあ、ARTIST 02だよ。僕の曲、聴いてみる?",
+        "en": "Hi, I'm ARTIST 02. Wanna hear my song?"
+      }
+    },
+    {
+      "name": "ARTIST 03",
+      "credit": "Mix · Master",
+      "spotify": "",
+      "intro": {
+        "ko": "안녕, 난 ARTIST 03이야. 내 노래 들어볼래?",
+        "ja": "やあ、ARTIST 03だよ。私の曲、聴いてみる?",
+        "en": "Hi, I'm ARTIST 03. Wanna hear my song?"
+      }
+    },
+    {
+      "name": "ARTIST 04",
+      "credit": "Master",
+      "spotify": "",
+      "intro": {
+        "ko": "안녕, 난 ARTIST 04야. 내 노래 들어볼래?",
+        "ja": "こんにちは、ARTIST 04です。私の曲、聴いてみる?",
+        "en": "Hi, I'm ARTIST 04. Wanna hear my song?"
+      }
+    }
+  ],
+  "easterEgg": {
+    "notes": []
+  }
+}

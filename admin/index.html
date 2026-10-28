@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>JEYA SOUND · 관리</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,600..900&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Nanum+Pen+Script&display=swap">
+<style>
+:root{--paper:#ece2cb;--paper2:#f6efdf;--ink:#1f1b17;--navy:#1f2f5a;--red:#a8352b;--muted:#6b5f52;--line:rgba(42,34,26,.16);--bg:#1a130e;
+  --f-body:"IBM Plex Sans KR",system-ui,sans-serif;--f-mono:"IBM Plex Mono",ui-monospace,monospace;--f-hand:"Nanum Pen Script",cursive;--f-display:"Archivo",sans-serif}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;min-height:100vh;background:radial-gradient(80% 60% at 50% 0,#2c2018,var(--bg)) fixed;color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55}
+a{color:var(--navy)}
+.wrap{max-width:860px;margin:0 auto;padding:28px 16px 140px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;color:#f1ebdf;margin-bottom:22px}
+header h1{margin:0;font-family:var(--f-display);font-weight:900;font-size:1.25rem;letter-spacing:.02em}
+header h1 span{color:#e0644f}
+header .who{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.14em;color:rgba(241,235,223,.6)}
+.card{position:relative;background:var(--paper);border-radius:2px;padding:26px 22px 22px;margin:0 0 22px;box-shadow:0 14px 30px rgba(0,0,0,.45);
+  background-image:radial-gradient(120% 90% at 20% 0,rgba(255,255,255,.4),transparent 60%),repeating-linear-gradient(0deg,transparent 0 31px,rgba(42,34,26,.05) 31px 32px)}
+.card::before{content:"";position:absolute;left:50%;top:-9px;width:90px;height:22px;margin-left:-45px;background:rgba(214,196,150,.85);transform:rotate(2deg)}
+.card h2{margin:0 0 4px;font-family:var(--f-hand);font-weight:400;font-size:2rem;line-height:1;color:var(--navy)}
+.card .hint{margin:0 0 16px;color:var(--muted);font-size:.84rem}
+label{display:block;font-size:.8rem;font-weight:600;color:var(--muted);margin:12px 0 5px}
+label small{font-weight:400;color:#8a7c6b}
+input[type=text],input[type=password],input[type=number],input[type=url],textarea{width:100%;font:inherit;color:var(--ink);background:var(--paper2);border:1px solid var(--line);border-radius:4px;padding:10px 12px}
+textarea{min-height:84px;resize:vertical}
+input:focus,textarea:focus{outline:2px solid rgba(31,47,90,.35);outline-offset:1px}
+.tri{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.tri .lg{font-family:var(--f-mono);font-size:.66rem;letter-spacing:.14em;color:#8a7c6b;margin-bottom:3px}
+.row{display:grid;gap:10px;align-items:end}
+.btn{font:inherit;font-weight:600;border:0;border-radius:4px;padding:10px 16px;cursor:pointer;background:var(--ink);color:#f6efdf}
+.btn.red{background:var(--red)}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.sm{padding:7px 11px;font-size:.82rem}
+.btn:disabled{opacity:.5;cursor:default}
+.list{display:flex;flex-direction:column;gap:12px}
+.item{background:rgba(255,255,255,.45);border:1px solid var(--line);border-radius:6px;padding:14px}
+.item .tools{display:flex;gap:6px;justify-content:flex-end;margin-top:10px;flex-wrap:wrap}
+.disc{display:grid;grid-template-columns:96px 1fr;gap:14px}
+.cover{width:96px;height:96px;border-radius:4px;background:#d9ccb0 center/cover no-repeat;display:grid;place-items:center;font-size:.72rem;color:var(--muted);text-align:center;border:1px dashed rgba(42,34,26,.3);cursor:pointer;overflow:hidden}
+.disc .f{display:grid;grid-template-columns:90px 1fr 1fr;gap:8px}
+.disc .f .wide{grid-column:span 3}
+.gear{display:grid;grid-template-columns:1fr 1.6fr auto;gap:8px;align-items:center;margin-bottom:8px}
+.price{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.switch{display:flex;align-items:center;gap:10px;margin:4px 0 14px;font-weight:600}
+.switch input{width:20px;height:20px}
+.notes-ok{font-family:var(--f-mono);font-size:.78rem;margin-top:6px}
+.bad{color:var(--red)}
+.savebar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;align-items:center;justify-content:center;gap:14px;padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px));background:rgba(20,15,11,.92);backdrop-filter:blur(6px);color:#f1ebdf}
+.savebar .st{font-size:.86rem;max-width:520px}
+.savebar .btn{background:#e3b56a;color:#1f1b17;font-family:var(--f-display);font-weight:800;padding:12px 26px}
+#login{max-width:380px;margin:18vh auto 0}
+#login .card{text-align:center}
+#login input{text-align:center;margin-top:8px}
+#login .btn{margin-top:14px;width:100%}
+.err{color:#ffb4a8;margin-top:10px;font-size:.86rem}
+#login .err{color:var(--red)}
+.trih{margin-top:6px;font-size:.78rem;color:#8a5a3c;background:rgba(168,53,43,.07);border-radius:4px;padding:6px 8px}
+.trih .btn{margin:0 4px}
+.hidden{display:none!important}
+@media (max-width:640px){
+  .tri{grid-template-columns:1fr}
+  .price{grid-template-columns:1fr}
+  .disc{grid-template-columns:1fr}
+  .disc .f{grid-template-columns:80px 1fr}
+  .disc .f .wide{grid-column:span 2}
+  .gear{grid-template-columns:1fr 1fr auto}
+  .card{padding:24px 16px 18px}
+}
+</style>
+</head>
+<body>
+<div id="login">
+  <div class="card">
+    <h2>관리자 입장</h2>
+    <p class="hint">JEYA SOUND 홈페이지 내용 관리</p>
+    <input type="password" id="pw" placeholder="비밀번호" autocomplete="current-password">
+    <button class="btn red" id="go">들어가기</button>
+    <div class="err" id="loginErr"></div>
+  </div>
+</div>
+
+<div class="wrap hidden" id="app">
+  <header><h1>JEYA <span>SOUND</span> · 관리</h1><div class="who"><a href="/" target="_blank" style="color:inherit">사이트 보기 ↗</a></div></header>
+
+  <section class="card">
+    <h2>프로필</h2>
+    <p class="hint">한국어만 채워도 돼요. 일본어 · 영어 칸을 비워 두면 그 언어 화면에도 한국어가 나와요.</p>
+    <label>이름</label><input type="text" id="e_name">
+    <label>역할 <small>(예: 믹싱 · 마스터링 엔지니어)</small></label><div class="tri" id="e_role"></div>
+    <label>소개 글</label><div class="tri" id="e_bio" data-area="1"></div>
+    <label>작업 방식 <small>(예: 온라인 · 오프라인 세션 모두 가능)</small></label><div class="tri" id="e_session"></div>
+    <label>장르 <small>(쉼표로 구분)</small></label><div class="tri" id="e_genres"></div>
+    <label>장비</label><div id="gear"></div>
+    <button class="btn ghost sm" id="addGear">+ 장비 추가</button>
+  </section>
+
+  <section class="card">
+    <h2>가격</h2>
+    <p class="hint">원 단위 숫자만 입력해요. 레코딩은 "협의"로 고정돼요.</p>
+    <div class="price">
+      <div><label>믹싱</label><input type="number" id="r_mix" min="0" step="1000"></div>
+      <div><label>마스터링</label><input type="number" id="r_master" min="0" step="1000"></div>
+      <div><label>믹싱 + 마스터링</label><input type="number" id="r_mixmaster" min="0" step="1000"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>디스코그래피</h2>
+    <label class="switch"><input type="checkbox" id="discOpen"> 방문자에게 공개하기 <small style="font-weight:400;color:#8a7c6b">(끄면 "준비 중"으로 보여요)</small></label>
+    <p class="hint">커버를 누르면 이미지를 올릴 수 있어요(jpg · png). 맨 위 곡이 로비 포스터와 방 액자에 먼저 걸려요.</p>
+    <div class="list" id="discs"></div>
+    <button class="btn ghost sm" id="addDisc" style="margin-top:12px">+ 곡 추가</button>
+  </section>
+
+  <section class="card">
+    <h2>로비 아티스트</h2>
+    <p class="hint">캐릭터를 누르면 나오는 이름 카드와, 가까이 가면 뜨는 말풍선이에요.</p>
+    <div class="list" id="artists"></div>
+  </section>
+
+  <section class="card">
+    <h2>피아노 이스터에그</h2>
+    <p class="hint">음 이름 + 옥타브를 칸띄우기나 쉼표로 이어 적어요. 예: C5 C5 D#5 · 가운데 도 = C4 · 검은건반은 C#5 또는 Db5</p>
+    <textarea id="egg" placeholder="비워 두면 이스터에그가 꺼져요"></textarea>
+    <div class="notes-ok" id="eggCheck"></div>
+  </section>
+</div>
+
+<div class="savebar hidden" id="bar"><span class="st" id="status">바꾼 뒤 저장을 눌러 주세요.</span><button class="btn" id="save">저장하기</button></div>
+<input type="file" id="file" accept="image/jpeg,image/png,image/webp" class="hidden">
+
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const LANGS = [["ko", "한국어"], ["ja", "日本語"], ["en", "English"]];
+  let PW = "", C = null, dirty = false;
+  const ss = { get(k){ try { return sessionStorage.getItem(k) || ""; } catch(e){ return ""; } }, set(k, v){ try { sessionStorage.setItem(k, v); } catch(e){} } };
+  const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  async function api(path, body){
+    const r = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: PW, ...body }) });
+    let j = {}; try { j = await r.json(); } catch(e){}
+    if (!r.ok || !j.ok) throw new Error(j.error || ("오류 " + r.status));
+    return j;
+  }
+
+  async function login(){
+    const pw = $("#pw").value || ss.get("jeya-admin"); if (!pw) return;
+    PW = pw; $("#go").disabled = true; $("#loginErr").textContent = "";
+    try { await api("/api/save", { check: true }); ss.set("jeya-admin", pw); await start(); }
+    catch(e){ $("#loginErr").textContent = e.message === "Failed to fetch" ? "서버에 연결하지 못했어요" : e.message; PW = ""; }
+    $("#go").disabled = false;
+  }
+  $("#go").onclick = login; $("#pw").addEventListener("keydown", e => { if (e.key === "Enter") login(); });
+
+  async function start(){
+    const r = await fetch("/content.json?v=" + Date.now(), { cache: "no-store" });
+    if (!r.ok) throw new Error("content.json 파일을 찾지 못했어요. 저장소에 올라가 있는지 확인해 주세요.");
+    C = await r.json();
+    C.engineer = C.engineer || {}; C.rates = C.rates || {}; C.discography = C.discography || []; C.artists = C.artists || []; C.easterEgg = C.easterEgg || { notes: [] };
+    $("#login").classList.add("hidden"); $("#app").classList.remove("hidden"); $("#bar").classList.remove("hidden");
+    render();
+  }
+
+  // ---------- form building ----------
+  function tri(el, obj, area, key){
+    el.innerHTML = LANGS.map(([l, n]) => `<div><div class="lg">${n}</div>${area ? `<textarea data-l="${l}">${esc(obj && obj[l])}</textarea>` : `<input type="text" data-l="${l}" value="${esc(obj && obj[l])}">`}</div>`).join("");
+    const note = document.createElement("div"); note.className = "trih hidden";
+    note.innerHTML = `일본어 · 영어 칸은 예전 내용 그대로예요. <button type="button" class="btn ghost sm">일 · 영 비우기</button> <small>(비우면 그 언어 화면에도 한국어로 보여요)</small>`;
+    el.after(note);
+    const sync = () => { const o = {}; el.querySelectorAll("[data-l]").forEach(i => o[i.dataset.l] = i.value); key(o); touch(); return o; };
+    el.oninput = ev => { const o = sync(); if (ev.target.dataset.l === "ko") note.classList.toggle("hidden", !(o.ja || o.en)); };
+    note.querySelector("button").onclick = () => { el.querySelectorAll('[data-l="ja"],[data-l="en"]').forEach(i => i.value = ""); sync(); note.classList.add("hidden"); };
+  }
+  function render(){
+    const e = C.engineer;
+    $("#e_name").value = e.name || ""; $("#e_name").oninput = ev => { e.name = ev.target.value; touch(); };
+    tri($("#e_role"), e.role, false, o => e.role = o);
+    tri($("#e_bio"), e.bio, true, o => e.bio = o);
+    tri($("#e_session"), e.session, false, o => e.session = o);
+    const gj = {}; LANGS.forEach(([l]) => gj[l] = ((e.genres || {})[l] || []).join(", "));
+    tri($("#e_genres"), gj, false, o => { e.genres = {}; LANGS.forEach(([l]) => e.genres[l] = (o[l] || "").split(",").map(s => s.trim()).filter(Boolean)); });
+    renderGear();
+    ["mix", "master", "mixmaster"].forEach(k => { const i = $("#r_" + k); i.value = C.rates[k] || ""; i.oninput = () => { C.rates[k] = Math.max(0, Math.round(+i.value || 0)); touch(); }; });
+    $("#discOpen").checked = !!C.discographyOpen; $("#discOpen").onchange = ev => { C.discographyOpen = ev.target.checked; touch(); };
+    renderDiscs(); renderArtists();
+    $("#egg").value = (C.easterEgg.notes || []).join(" "); $("#egg").oninput = () => { checkEgg(); touch(); }; checkEgg();
+  }
+  function renderGear(){
+    const e = C.engineer; e.gear = e.gear || [];
+    $("#gear").innerHTML = e.gear.map((g, i) => `<div class="gear"><input type="text" data-i="${i}" data-k="0" value="${esc(g[0])}" placeholder="분류 (예: Monitors)"><input type="text" data-i="${i}" data-k="1" value="${esc(g[1])}" placeholder="모델 (예: JBL 705P)"><button class="btn ghost sm" data-del="${i}">삭제</button></div>`).join("");
+    $("#gear").oninput = ev => { const t = ev.target; if (t.dataset.i == null) return; e.gear[+t.dataset.i][+t.dataset.k] = t.value; touch(); };
+    $("#gear").onclick = ev => { const d = ev.target.dataset.del; if (d == null) return; e.gear.splice(+d, 1); renderGear(); touch(); };
+  }
+  $("#addGear").onclick = () => { C.engineer.gear = C.engineer.gear || []; C.engineer.gear.push(["", ""]); renderGear(); touch(); };
+
+  const previews = {};
+  function renderDiscs(){
+    const D = C.discography;
+    $("#discs").innerHTML = D.map((d, i) => `<div class="item"><div class="disc">
+        <div class="cover" data-cover="${i}" style="${previews[i] || d.cover ? `background-image:url('${esc(previews[i] || "/" + d.cover)}')` : ""}">${previews[i] || d.cover ? "" : "커버 올리기"}</div>
+        <div class="f">
+          <div><label>연도</label><input type="number" data-i="${i}" data-k="year" value="${esc(d.year)}"></div>
+          <div><label>아티스트</label><input type="text" data-i="${i}" data-k="artist" value="${esc(d.artist)}"></div>
+          <div><label>역할</label><input type="text" data-i="${i}" data-k="role" value="${esc(d.role)}" placeholder="Mix · Master"></div>
+          <div class="wide"><label>곡 / 앨범 제목</label><input type="text" data-i="${i}" data-k="title" value="${esc(d.title)}"></div>
+        </div></div>
+        <div class="tools"><button class="btn ghost sm" data-mv="${i}" data-d="-1">↑ 위로</button><button class="btn ghost sm" data-mv="${i}" data-d="1">↓ 아래로</button>${d.cover ? `<button class="btn ghost sm" data-nocover="${i}">커버 빼기</button>` : ""}<button class="btn ghost sm" data-del="${i}">삭제</button></div></div>`).join("") || `<p class="hint">아직 곡이 없어요.</p>`;
+  }
+  $("#discs").oninput = ev => { const t = ev.target; if (t.dataset.i == null) return; const d = C.discography[+t.dataset.i]; d[t.dataset.k] = t.dataset.k === "year" ? (+t.value || "") : t.value; touch(); };
+  $("#discs").onclick = ev => {
+    const t = ev.target.closest("[data-cover],[data-mv],[data-del],[data-nocover]"); if (!t) return; const D = C.discography;
+    if (t.dataset.cover != null){ pickCover(+t.dataset.cover); return; }
+    if (t.dataset.mv != null){ const i = +t.dataset.mv, j = i + (+t.dataset.d); if (j < 0 || j >= D.length) return; [D[i], D[j]] = [D[j], D[i]]; [previews[i], previews[j]] = [previews[j], previews[i]]; }
+    if (t.dataset.del != null){ if (!confirm("이 곡을 목록에서 뺄까요?")) return; D.splice(+t.dataset.del, 1); Object.keys(previews).forEach(k => delete previews[k]); }
+    if (t.dataset.nocover != null){ D[+t.dataset.nocover].cover = ""; delete previews[+t.dataset.nocover]; }
+    renderDiscs(); touch();
+  };
+  $("#addDisc").onclick = () => { C.discography.unshift({ year: new Date().getFullYear(), artist: "", title: "", role: "Mix", cover: "" }); Object.keys(previews).forEach(k => delete previews[k]); renderDiscs(); touch(); };
+
+  let coverFor = -1;
+  function pickCover(i){ coverFor = i; $("#file").value = ""; $("#file").click(); }
+  $("#file").onchange = async () => {
+    const f = $("#file").files[0]; if (!f || coverFor < 0) return;
+    const i = coverFor; setStatus("커버를 올리는 중…");
+    try {
+      const url = await shrink(f, 1000);
+      previews[i] = url; renderDiscs();
+      const j = await api("/api/upload", { name: (f.name || "cover").replace(/\.[^.]+$/, "") + ".jpg", data: url.split(",")[1] });
+      C.discography[i].cover = j.path; renderDiscs(); touch();
+      setStatus("커버를 올렸어요. 저장을 눌러야 사이트에 반영돼요.");
+    } catch(e){ delete previews[i]; renderDiscs(); setStatus("커버를 올리지 못했어요: " + e.message, true); }
+  };
+  function shrink(file, max){
+    return new Promise((res, rej) => {
+      const img = new Image(), u = URL.createObjectURL(file);
+      img.onload = () => { const s = Math.min(1, max / Math.max(img.width, img.height)), w = Math.round(img.width * s), h = Math.round(img.height * s);
+        const c = document.createElement("canvas"); c.width = w; c.height = h; const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, w, h); g.drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(u); res(c.toDataURL("image/jpeg", .86)); };
+      img.onerror = () => rej(new Error("이미지를 읽지 못했어요")); img.src = u;
+    });
+  }
+
+  function renderArtists(){
+    const A = C.artists;
+    $("#artists").innerHTML = A.map((a, i) => `<div class="item"><div style="font-family:var(--f-mono);font-size:.7rem;letter-spacing:.16em;color:#8a7c6b">ARTIST ${String(i + 1).padStart(2, "0")}</div>
+      <div class="row" style="grid-template-columns:1fr 1fr"><div><label>이름</label><input type="text" data-i="${i}" data-k="name" value="${esc(a.name)}"></div><div><label>함께한 작업</label><input type="text" data-i="${i}" data-k="credit" value="${esc(a.credit)}" placeholder="Mix · Master"></div></div>
+      <label>Spotify 링크 <small>(비우면 "링크 준비 중")</small></label><input type="url" data-i="${i}" data-k="spotify" value="${esc(a.spotify)}" placeholder="https://open.spotify.com/...">
+      <label>말풍선 멘트</label><div class="tri" data-tri="${i}"></div></div>`).join("");
+    A.forEach((a, i) => tri($(`[data-tri="${i}"]`), a.intro, false, o => a.intro = o));
+  }
+  $("#artists").oninput = ev => { const t = ev.target; if (t.dataset.i == null || !t.dataset.k) return; C.artists[+t.dataset.i][t.dataset.k] = t.value; touch(); };
+
+  const NOTE = /^([A-Ga-g])(#|b)?(-?\d)$/;
+  function checkEgg(){
+    const toks = $("#egg").value.split(/[\s,]+/).filter(Boolean);
+    const norm = [], bad = [];
+    toks.forEach(t => { const m = NOTE.exec(t); if (m) norm.push(m[1].toUpperCase() + (m[2] || "") + m[3]); else bad.push(t); });
+    C.easterEgg.notes = norm;
+    $("#eggCheck").innerHTML = !toks.length ? "이스터에그 꺼짐" : `${norm.length}개 음` + (bad.length ? ` · <span class="bad">읽을 수 없는 칸: ${bad.map(esc).join(", ")}</span>` : " · 모두 정상");
+  }
+
+  // ---------- save ----------
+  function touch(){ dirty = true; setStatus("바뀐 내용이 있어요. 저장을 눌러 주세요."); }
+  function setStatus(t, bad){ $("#status").textContent = t; $("#status").style.color = bad ? "#ffb4a8" : ""; }
+  $("#save").onclick = async () => {
+    $("#save").disabled = true; setStatus("저장 중…");
+    try { await api("/api/save", { content: C }); dirty = false; setStatus("저장했어요 ✓ 1~2분 뒤 사이트에 반영돼요 (새로고침해서 확인)"); }
+    catch(e){ setStatus("저장하지 못했어요: " + e.message, true); }
+    $("#save").disabled = false;
+  };
+  addEventListener("beforeunload", e => { if (dirty){ e.preventDefault(); e.returnValue = ""; } });
+
+  if (ss.get("jeya-admin")){ $("#pw").value = ""; login(); }
+})();
+</script>
+</body>
+</html>
