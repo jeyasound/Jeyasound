@@ -2651,9 +2651,9 @@ async function playIntro(){
   await walkDownStairs(2200); if (skipFlag) return;
   sensorOn(true); autoDoorTo(1, 700);
   await camTo({ pos: V15(LOFT.x0 - .6, 1.68, 1.45), tgt: V15(XE, 1.2, 1.45), fov: 66 }, 700, ease.lin, 0, .012); if (skipFlag) return;
-  await camTo(hallView(), 900, ease.out, 0, .01); if (skipFlag) return;
+  const wcT = setTimeout(() => { if (!skipFlag) showWelcome(true); }, 560);   // the card fades in while the camera settles
+  await camTo(hallView(), 900, ease.out, 0, .01); if (skipFlag){ clearTimeout(wcT); return; }
   autoDoorTo(0, 900); setTimeout(() => sensorOn(false), 900);
-  await camTo(hallView(), 850, ease.io); if (skipFlag) return;
   camMode = "hall"; uiFor("hall");
 }
 // rotate the view around the camera position to a yaw/pitch (never swings the target through the camera)
@@ -4516,7 +4516,7 @@ function welcomeCss(){
 }
 function welcomeEl(){ let el = $("#welcome"); if (!el){ welcomeCss(); const sh = document.createElement("div"); sh.id = "wcShade"; document.body.appendChild(sh); el = document.createElement("div"); el.id = "welcome"; el.setAttribute("role", "dialog"); document.body.appendChild(el); } return el; }
 const paper = (inner, seed) => `<span class="tape t1"></span><span class="tape t2"></span><div class="wc-paper" style="--tear:${tearPath(seed)}">${inner}</div>`;
-function showWelcome(){
+function showWelcome(early){
   if (welcomeShown) return; welcomeShown = true;
   const el = welcomeEl(), lang = state.lang;
   const T = { ko: ["JEYA SOUND · MIX & MASTER", "<span>믹싱을 맡길</span><br><span><u>엔지니어를 선택</u>하세요</span>", "곡을 보내주시면 좋은 사운드로 돌려드릴게요.", "의뢰 맡기기", "둘러보기"],
@@ -4527,7 +4527,7 @@ function showWelcome(){
   el.querySelector(".wc-main").onclick = () => { closeWelcome(); requestMix(); };
   el.querySelector(".wc-ghost").onclick = () => showMoveHint();
   document.body.classList.add("welcome-on");
-  setTimeout(() => { if (state.mode === "hall" && !hasWalked && !welcomeGone && !pianoOn) el.classList.add("on"); else document.body.classList.remove("welcome-on"); }, 250);
+  setTimeout(() => { if ((state.mode === "hall" || early) && !hasWalked && !welcomeGone && !pianoOn) el.classList.add("on"); else document.body.classList.remove("welcome-on"); }, 250);
 }
 // 의뢰 맡기기: with one engineer on duty, go straight in; with more, this is where the picker would open
 function requestMix(){
