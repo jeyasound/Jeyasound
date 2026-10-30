@@ -63,7 +63,7 @@
     "master": 80000,
     "mixmaster": 350000
   },
-  "discographyOpen": false,
+  "discographyOpen": true,
   "discography": [
     {
       "year": 2026,
