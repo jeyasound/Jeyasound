@@ -3651,6 +3651,7 @@ new MutationObserver(() => { if (!$("#book").classList.contains("on")) putContra
   .sp-head,.sp-body{width:100%;max-width:860px;margin:0 auto}
   .panel.full .crate{grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
 
+  @media (min-width:641px) and (max-width:820px){.panel{left:auto!important;right:0!important;top:0!important;height:auto!important;border-radius:0!important;padding-top:calc(70px + env(safe-area-inset-top,0px))!important;transform:translateX(104%)}.panel-open .panel{transform:none!important}.panel::before{height:calc(54px + env(safe-area-inset-top,0px))!important;border-radius:0!important}}
   @media (max-width:640px){.panel{width:auto!important;height:calc(52% + 48% * var(--grow))!important}.panel.full{border-radius:0!important}.panel.full .crate{grid-template-columns:repeat(2,minmax(0,1fr))}}
   @media (max-width:640px){.sp-head{padding-top:22px}.crate{gap:18px 14px}}`;
   document.head.appendChild(st);
@@ -3664,6 +3665,7 @@ function renderPanel(e){
 }
 const CASSETTE = `<svg viewBox="0 0 64 44" aria-hidden="true"><rect x="1.5" y="1.5" width="61" height="41" rx="6" fill="#2f251d" stroke="#efe6d4" stroke-opacity=".55" stroke-width="1.5"/><rect x="9" y="6" width="46" height="13" rx="2" fill="#e9dfc8"/><rect x="14" y="24" width="36" height="13" rx="6.5" fill="#15100c" stroke="#efe6d4" stroke-opacity=".4"/><g class="h" style="transform-origin:23px 30.5px"><circle cx="23" cy="30.5" r="5.5" fill="#efe6d4"/><circle cx="23" cy="30.5" r="2" fill="#15100c"/><path d="M23 25v3M23 33v3M17.5 30.5h3M25.5 30.5h3" stroke="#15100c" stroke-width="1.2"/></g><g class="h" style="transform-origin:41px 30.5px"><circle cx="41" cy="30.5" r="5.5" fill="#efe6d4"/><circle cx="41" cy="30.5" r="2" fill="#15100c"/><path d="M41 25v3M41 33v3M35.5 30.5h3M43.5 30.5h3" stroke="#15100c" stroke-width="1.2"/></g></svg>`;
 function renderTab(e){
+  if ((state.tab === "disco" || state.tab === "ba") && typeof setGrow === "function" && grow) setGrow(0);
   const t = L(), b = $("#pbody"); const tag = SITE_CONTENT ? "" : `<span class="sample">${t.sample}</span>`;
   if (state.tab === "about"){
     const rows = [["ROLE", esc(tr(e.role))], [esc(t.sessionLbl).toUpperCase(), esc(tr(e.session))], ["GEAR", e.gear.map(([k, v]) => esc(v)).join("<br>")]].filter(r => r[1]);
@@ -3744,6 +3746,7 @@ function setGrow(v){
 (function(){
   const panel = $("#panel"); let ty = null;
   const feed = d => { if (!panelOpen) return false; const b = $("#pbody");
+    if (state.tab === "disco" || state.tab === "ba"){ if (grow) setGrow(0); return false; }   // discography / Before & After keep their size (no scroll-to-enlarge)
     if (d > 0 && grow < 1){ setGrow(grow + d / 700); return true; }
     if (d < 0 && grow > 0 && (!b || b.scrollTop <= 0)){ setGrow(grow + d / 700); return true; }
     return false; };
