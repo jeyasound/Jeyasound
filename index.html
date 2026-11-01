@@ -592,7 +592,7 @@ const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const mobile = () => innerWidth <= 820;
 const portrait = () => innerWidth / innerHeight < .8;
 function store(k, v){ try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch(e){ return null; } }
-function initLang(){ const saved = store("jeya-lang"), nav = (navigator.language || "ko").slice(0,2); state.lang = I18N[saved] ? saved : (I18N[nav] ? nav : "ko"); }
+function initLang(){ const saved = store("jeya-lang"), nav = (navigator.language || "ko").slice(0,2); state.lang = I18N[saved] ? saved : "en"; }   // English unless the visitor picked a language
 
 /* =========================================================
    5) LAYOUT (metres). Rooms line the back wall; lounge in front.
@@ -3583,11 +3583,11 @@ new MutationObserver(() => { if (!$("#book").classList.contains("on")) putContra
   .card dt{font-family:var(--f-mono);font-size:.62rem;letter-spacing:.16em;color:#6b5f52;padding-top:2px}.card dd{margin:0;font-size:.88rem;line-height:1.5}
   /* before / after: tape-deck channel strips */
   .deck{display:grid;gap:12px}
-  .panel .ba.strip{display:grid;grid-template-columns:56px minmax(0,1fr);gap:12px 14px;align-items:center;padding:14px;background:linear-gradient(#2a211a,#1d1712)!important;border:1px solid rgba(239,230,212,.12)!important;border-radius:4px!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
+  .panel .ba.strip{display:grid;grid-template-columns:68px minmax(0,1fr);gap:12px 14px;align-items:center;padding:14px;background:linear-gradient(#2a211a,#1d1712)!important;border:1px solid rgba(239,230,212,.12)!important;border-radius:4px!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
   .panel .ba.strip.playing{border-color:rgba(227,181,106,.6)!important}
-  .strip .reel{grid-row:1/3;width:56px;height:56px;border-radius:50%;position:relative;background:radial-gradient(circle,#17120e 0 6px,#cfc4ae 7px 9px,#3d3127 10px 22px,#cfc4ae 23px 25px,#2a211a 26px)}
-  .strip .reel i{position:absolute;inset:9px;border-radius:50%;background:conic-gradient(rgba(23,18,14,.9) 0 30deg,transparent 30deg 120deg,rgba(23,18,14,.9) 120deg 150deg,transparent 150deg 240deg,rgba(23,18,14,.9) 240deg 270deg,transparent 270deg)}
-  .strip.playing .reel i{animation:spin 1.6s linear infinite}
+  .strip .reel{grid-row:1/3;width:64px;height:44px;display:block;animation:none!important;background:none;border-radius:0}
+  .strip .reel svg{display:block;width:64px;height:44px;overflow:visible}
+  .strip.playing .reel .h{animation:spin 1.4s linear infinite}
   .strip .tape-label{display:inline-block;max-width:100%;background:#e9dfc8;color:#1f1b17;padding:2px 10px;font-family:"Nanum Pen Script","Caveat",cursive;font-size:1.35rem;line-height:1.3;transform:rotate(-1deg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .strip .meta small{display:block;margin-top:6px;font-family:var(--f-mono);font-size:.62rem;letter-spacing:.16em;color:rgba(239,230,212,.5)}
   .strip .meter{height:9px!important;margin-top:8px!important;background:repeating-linear-gradient(90deg,rgba(239,230,212,.1) 0 6px,transparent 6px 8px)!important;overflow:hidden}
@@ -3662,28 +3662,33 @@ function renderPanel(e){
   if (e.status !== "active"){ $("#pbody").innerHTML = `<div class="card"><p class="bio">${esc(t.hiringText)}</p></div>`; return; }
   renderTab(e);
 }
+const CASSETTE = `<svg viewBox="0 0 64 44" aria-hidden="true"><rect x="1.5" y="1.5" width="61" height="41" rx="6" fill="#2f251d" stroke="#efe6d4" stroke-opacity=".55" stroke-width="1.5"/><rect x="9" y="6" width="46" height="13" rx="2" fill="#e9dfc8"/><rect x="14" y="24" width="36" height="13" rx="6.5" fill="#15100c" stroke="#efe6d4" stroke-opacity=".4"/><g class="h" style="transform-origin:23px 30.5px"><circle cx="23" cy="30.5" r="5.5" fill="#efe6d4"/><circle cx="23" cy="30.5" r="2" fill="#15100c"/><path d="M23 25v3M23 33v3M17.5 30.5h3M25.5 30.5h3" stroke="#15100c" stroke-width="1.2"/></g><g class="h" style="transform-origin:41px 30.5px"><circle cx="41" cy="30.5" r="5.5" fill="#efe6d4"/><circle cx="41" cy="30.5" r="2" fill="#15100c"/><path d="M41 25v3M41 33v3M35.5 30.5h3M43.5 30.5h3" stroke="#15100c" stroke-width="1.2"/></g></svg>`;
 function renderTab(e){
   const t = L(), b = $("#pbody"); const tag = SITE_CONTENT ? "" : `<span class="sample">${t.sample}</span>`;
   if (state.tab === "about"){
     const rows = [["ROLE", esc(tr(e.role))], [esc(t.sessionLbl).toUpperCase(), esc(tr(e.session))], ["GEAR", e.gear.map(([k, v]) => esc(v)).join("<br>")]].filter(r => r[1]);
     b.innerHTML = `${tag}<div class="deck">
-      <div class="ba strip prof${e.photo ? " has-photo" : ""}">${e.photo ? `<div class="pf-photo"><img src="${esc(e.photo)}" alt="${esc(e.name)}" loading="lazy"><span class="pf-tape"></span></div>` : `<div class="reel"><i></i></div>`}<div class="meta"><span class="tape-label">${esc(e.name)}</span></div>
+      <div class="ba strip prof${e.photo ? " has-photo" : ""}">${e.photo ? `<div class="pf-photo"><img src="${esc(e.photo)}" alt="${esc(e.name)}" loading="lazy"><span class="pf-tape"></span></div>` : `<div class="reel">${CASSETTE}</div>`}<div class="meta"><span class="tape-label">${esc(e.name)}</span></div>
         <p class="prof-bio">${esc(tr(e.bio))}</p></div>
       <div class="rack">${rows.map(([k, v], i) => `<div class="unit"><span class="screw"></span><em class="led${i ? "" : " on"}"></em><span class="u-k">${k}</span><span class="u-v">${v}</span><span class="screw"></span></div>`).join("")}</div></div>`;
   } else if (state.tab === "ba"){
     b.innerHTML = `<div class="deck">${e.tracks.map((tk, i) => `
       <div class="ba strip" data-i="${i}">
-        <div class="reel"><i></i></div>
+        <div class="reel">${CASSETTE}</div>
         <div class="meta"><span class="tape-label">${esc(tr(tk.title))}</span><small>TRACK ${String(i + 1).padStart(2, "0")}</small><div class="meter"><i></i></div></div>
         <div class="ctl"><button type="button" class="play" aria-label="Play">${PLAY}</button>
           <div class="ab" role="group" aria-label="Before / After"><button type="button" data-m="before" aria-pressed="true"><em></em>${t.before}</button><button type="button" data-m="after" aria-pressed="false"><em></em>${t.after}</button></div></div>
       </div>`).join("")}</div><p class="ba-note">${t.baNote}</p>`;
     b.querySelectorAll(".ba").forEach(row => {
       const i = +row.dataset.i; row.style.setProperty("--mw", row.querySelector(".meter").offsetWidth + "px");
+      const key = e.id + ":" + i; row._key = key; row.dataset.mode = BAMEM.mode[key] || "before"; row._pos = BAMEM.pos[key] || 0;
+      row.querySelectorAll(".ab button").forEach(x => x.setAttribute("aria-pressed", x.dataset.m === row.dataset.mode));
+      if (BAP.cur && BAP.cur.row._key === key){ BAP.cur.row = row; row.classList.add("playing"); row.querySelector(".play").innerHTML = PAUSE; }   // same track keeps playing after a language switch
+      else if (Synth.playingRow && Synth.playingRow._key === key){ Synth.playingRow = row; row.classList.add("playing"); row.querySelector(".play").innerHTML = PAUSE; }
       row.querySelector(".play").onclick = () => togglePlay(e, i, row);
       row.querySelectorAll(".ab button").forEach(btn => btn.onclick = () => {
         row.querySelectorAll(".ab button").forEach(x => x.setAttribute("aria-pressed", x === btn));
-        row.dataset.mode = btn.dataset.m; if (Synth.playingRow === row) Synth.setMode(btn.dataset.m); if (BAP.cur && BAP.cur.row === row) baSetMode(btn.dataset.m);
+        row.dataset.mode = btn.dataset.m; BAMEM.mode[row._key] = btn.dataset.m; if (Synth.playingRow === row) Synth.setMode(btn.dataset.m); if (BAP.cur && BAP.cur.row === row) baSetMode(btn.dataset.m);
       });
     });
   } else if (state.tab === "rates"){
@@ -3691,7 +3696,7 @@ function renderTab(e){
     b.innerHTML = `${tag}<div class="rack">${rows.map((r, i) => `<div class="unit"><span class="screw"></span><em class="led on"></em><span class="u-k">${esc(t[r.k])}</span><span class="u-v"><b>${priceTxt(r)}</b> ${r.unit ? esc(t[r.unit]) : ""}<br><small>${esc(tr(r.inc))}${r.alt ? `<br>★ ${esc(tr(r.alt))}` : ""}</small></span><span class="screw"></span></div>`).join("")}</div><p class="ba-note">${t.ratesNote.replace(/\n/g, "<br>")}</p>`;
   } else if (state.tab === "guide"){
     const G = GUIDE[state.lang] || GUIDE.ko;
-    b.innerHTML = `${tag}<div class="deck"><div class="ba strip prof"><div class="reel"><i></i></div><div class="meta"><span class="tape-label">${esc(G.title)}</span><small>${esc(G.sub)}</small></div></div>
+    b.innerHTML = `${tag}<div class="deck"><div class="ba strip prof"><div class="reel">${CASSETTE}</div><div class="meta"><span class="tape-label">${esc(G.title)}</span><small>${esc(G.sub)}</small></div></div>
       <div class="rack">${G.items.map(([k, v], i) => `<div class="unit"><span class="screw"></span><em class="led on"></em><span class="u-k">${String(i + 1).padStart(2, "0")} · ${esc(k)}</span><span class="u-v">${esc(v)}</span><span class="screw"></span></div>`).join("")}</div>
       <p class="ba-note">${esc(G.note)}</p></div>`;
   } else if (state.tab === "disco"){
@@ -3946,10 +3951,11 @@ function baLoad(url){
     .then(buf => new Promise((res, rej) => baCtx().decodeAudioData(buf, res, rej))).catch(err => { delete BAP.cache[url]; throw err; });
   return BAP.cache[url];
 }
+const BAMEM = { mode: {}, pos: {} };   // per-track Before/After choice and paused position, kept across panel re-renders
 function baPos(c){ return Math.min(c.dur, c.offset + Math.max(0, BAP.ctx.currentTime - c.t0)); }
 function baStop(keepPos){
   const c = BAP.cur; if (!c) return; BAP.cur = null;
-  c.row._pos = keepPos ? baPos(c) : 0;
+  c.row._pos = keepPos ? baPos(c) : 0; if (c.row._key) BAMEM.pos[c.row._key] = c.row._pos;
   try { c.sA.onended = null; c.sA.stop(); c.sB.stop(); } catch(e){}
   cancelAnimationFrame(c.raf);
   c.row.classList.remove("playing", "loading"); const pb = c.row.querySelector(".play"); if (pb) pb.innerHTML = PLAY;
@@ -3973,7 +3979,7 @@ async function togglePlay(e, i, row){
   catch(err){ row.classList.remove("loading"); toast({ ko: "음원을 불러오지 못했어요. 잠시 후 다시 눌러 주세요.", ja: "音源を読み込めませんでした。もう一度お試しください。", en: "Couldn't load the audio — please try again." }[state.lang]); return; }
   row.classList.remove("loading");
   if (!row.isConnected || (BAP.cur && BAP.cur.row !== row && BAP.cur.started)) return;
-  baStop();
+  baStop(); document.querySelectorAll("#pbody .strip.playing").forEach(r => r.classList.remove("playing"));
   const mode = row.dataset.mode || "before", gA = ctx.createGain(), gB = ctx.createGain();
   gA.gain.value = mode === "after" ? 1 : 0; gB.gain.value = mode === "before" ? 1 : 0;
   const sA = ctx.createBufferSource(), sB = ctx.createBufferSource(); sA.buffer = bufA; sB.buffer = bufB;
@@ -3983,9 +3989,9 @@ async function togglePlay(e, i, row){
   const c = { row, sA, sB, gA, gB, t0, offset, dur, started: true }; BAP.cur = c;
   sA.onended = () => { if (BAP.cur === c) baStop(false); };
   row.classList.add("playing"); row.querySelector(".play").innerHTML = PAUSE; document.body.classList.add("room-playing");
-  const data = new Float32Array(BAP.an.fftSize), mi = row.querySelector(".meter i");
+  const data = new Float32Array(BAP.an.fftSize);
   const tick = () => { if (BAP.cur !== c) return; BAP.an.getFloatTimeDomainData(data); let s2 = 0; for (let k = 0; k < data.length; k++) s2 += data[k] * data[k];
-    const lvl = Math.min(1, Math.sqrt(s2 / data.length) * 3.2); if (mi) mi.style.width = (lvl * 100) + "%"; onLevel(lvl); c.raf = requestAnimationFrame(tick); };
+    const lvl = Math.min(1, Math.sqrt(s2 / data.length) * 3.2), mi = c.row.querySelector(".meter i"); if (mi) mi.style.width = (lvl * 100) + "%"; onLevel(lvl); c.raf = requestAnimationFrame(tick); };
   tick();
 }
 (function(){ const st = document.createElement("style"); st.textContent = `.strip.loading .play{opacity:.5;animation:pulse .8s ease-in-out infinite alternate}@keyframes pulse{to{opacity:1}}`; document.head.appendChild(st); })();
