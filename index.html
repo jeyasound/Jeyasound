@@ -2131,6 +2131,7 @@ function selectTab(k){
   $("#panel").querySelectorAll(".tab").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === k));
   renderTab(e); $("#pbody").scrollTop = 0;
 }
+const fmtQ = q => (state.lang === "en" && q.usd) ? "$" + q.usd.toLocaleString("en-US") : fmt(q.price);   // English shows its own USD price
 const fmt = n => new Intl.NumberFormat(state.lang === "en" ? "en-US" : state.lang, { style:"currency", currency:CONFIG.currency, maximumFractionDigits:0 }).format(n);
 const hue = i => ["#8a5a2b","#2f4560","#7a3a2c","#5f6b45","#4a3b6a","#6a4a1f"][i % 6];
 const PLAY = `<svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M3 1.5v11l9-5.5z"/></svg>`;
@@ -2932,7 +2933,17 @@ function renderFrame(){
 }
 
 /* ---------- rates helpers ---------- */
-function priceTxt(q){ return q.price == null ? L().consult : fmt(q.price); }
+function priceTxt(q){ return q.price == null ? L().consult : fmtQ(q); }
+// English prices are set in dollars (admin → 가격 → 영어 화면 달러). Texts that quote a price follow them.
+const USD_DEFAULT = { mix: 300, master: 80, mixmaster: 350 };
+function usdSync(e, U){
+  if (!e || !e.rates) return; U = U || {};
+  e.rates.forEach(rt => { const v = +U[rt.k] || USD_DEFAULT[rt.k]; if (v) rt.usd = Math.round(v); });
+  const g = k => (e.rates.find(r => r.k === k) || {}).usd, mix = e.rates.find(r => r.k === "mix"), mm = e.rates.find(r => r.k === "mixmaster");
+  if (mix && mix.alt && g("mix")) mix.alt.en = mix.alt.en.replace(/[₩$][\d,]+/, "$" + g("mix"));
+  if (mm && mm.inc && g("mix") && g("master") && g("mixmaster")){ const s = g("mix") + g("master") - g("mixmaster"); mm.inc.en = "Mix and master together" + (s > 0 ? " · save $" + s : ""); }
+}
+ENGINEERS.forEach(e => usdSync(e));
 function wrapText(g, text, x, y, maxW, lh){
   const parts = String(text).split("\n"); if (parts.length > 1){ parts.forEach((p, i) => { y = wrapText(g, p, x, y, maxW, lh) + (i < parts.length - 1 ? lh : 0); }); return y; }
   const words = String(text).split(/(\s+)/); let line = "";
@@ -4340,12 +4351,13 @@ function pickGoal(a){
   a.timer = 2;
 }
 let engaged = null, hoverArt = -1;
+const artQuiet = i => { const d = ARTISTS[i]; return !(d && d.intro && (d.intro.ko || d.intro.ja || d.intro.en)); };   // no intro text → no interaction
 function artistTick(t, dt){
   const hall = state.mode === "hall" && camMode === "hall" && PLAYER.pos;
   // who is close enough to say hi
   if (hall){
     let best = null, bd = 9;
-    artistFigs.forEach(a => { const d = Math.hypot(a.g.position.x - PLAYER.pos.x, a.g.position.z - PLAYER.pos.z); if (d < bd){ bd = d; best = a; } });
+    artistFigs.forEach(a => { if (artQuiet(a.i)) return; const d = Math.hypot(a.g.position.x - PLAYER.pos.x, a.g.position.z - PLAYER.pos.z); if (d < bd){ bd = d; best = a; } });
     const ed = engaged ? Math.hypot(engaged.g.position.x - PLAYER.pos.x, engaged.g.position.z - PLAYER.pos.z) : 99;
     if (ed > 3.0) engaged = null;
     // always talk to whoever is closest once you're near (switch if someone else is clearly nearer)
@@ -4580,7 +4592,7 @@ function hideWalkHint(){ const g = welcomeGone; closeWelcome(); welcomeGone = g;
 // hovering an artist brightens their floor ring and names them
 window.addEventListener("pointermove", ev => {
   if (typeof sceneReady === "undefined" || !sceneReady || state.mode !== "hall" || ev.target !== renderer.domElement){ hoverArt = -1; return; }
-  const h = pick(ev, artistFigs.map(a => a.hit)); hoverArt = h ? h.object.userData.artist : -1;
+  const h = pick(ev, artistFigs.filter(a => !artQuiet(a.i)).map(a => a.hit)); hoverArt = h ? h.object.userData.artist : -1;
   const tip = $("#tip"); if (h && tip && ARTISTS[hoverArt]){ tip.textContent = ARTISTS[hoverArt].name; tip.style.transform = `translate(${ev.clientX + 14}px,${ev.clientY + 12}px)`; tip.classList.add("on"); }
   else if (tip && state.mode === "hall") tip.classList.remove("on");
 });
@@ -5401,12 +5413,13 @@ async function loadContent(){
       if (g.genres && typeof g.genres === "object"){ const gg = {}; ["ko", "ja", "en"].forEach(l => { const v = g.genres[l] || g.genres.ko || g.genres.en; gg[l] = Array.isArray(v) ? v.map(String) : []; }); if (gg.ko.length) e.genres = gg; }
       if (Array.isArray(g.gear)) e.gear = g.gear.filter(x => Array.isArray(x) && x[0]).map(x => [String(x[0]), String(x[1] || "")]);
     }
+    if (e) usdSync(e, c.ratesUSD);
     if (e && c.rates && typeof c.rates === "object"){
       (e.rates || []).forEach(rt => { const v = c.rates[rt.k]; if (typeof v === "number" && v > 0) rt.price = Math.round(v); });
       const mix = (e.rates || []).find(rt => rt.k === "mix");
       if (mix && mix.alt && mix.price){
         const man = mix.price / 10000, wn = "₩" + mix.price.toLocaleString("en-US");
-        mix.alt = { ko: mix.alt.ko.replace(/[\d.]+만원/, man + "만원"), ja: mix.alt.ja.replace(/[\d.]+万ウォン/, man + "万ウォン"), en: mix.alt.en.replace(/₩[\d,]+/, wn) };
+        mix.alt = { ko: mix.alt.ko.replace(/[\d.]+만원/, man + "만원"), ja: mix.alt.ja.replace(/[\d.]+万ウォン/, man + "万ウォン"), en: mix.alt.en };
       }
     }
     if (e && Array.isArray(c.discography)){
@@ -5416,7 +5429,7 @@ async function loadContent(){
     if (Array.isArray(c.artists)) c.artists.slice(0, ARTISTS.length).forEach((a, i) => {
       if (!a) return; const A = ARTISTS[i];
       if (a.name) A.name = String(a.name); if (a.credit != null) A.credit = String(a.credit); if (a.spotify != null) A.spotify = String(a.spotify);
-      if (L3(a.intro)) A.intro = L3(a.intro);
+      if (a.intro !== undefined) A.intro = L3(a.intro) || { ko: "", ja: "", en: "" };   // emptied in admin → stays empty (no bubble, no card)
     });
     if (c.easterEgg && Array.isArray(c.easterEgg.notes) && c.easterEgg.notes.length) EGG.notes = c.easterEgg.notes.map(String);
   } catch(err){ console.warn("content.json not used", err); }
