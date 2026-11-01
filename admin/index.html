@@ -118,6 +118,13 @@ textarea{white-space:pre-wrap;line-height:1.55}
       <div><label>마스터링</label><input type="number" id="r_master" min="0" step="1000"></div>
       <div><label>믹싱 + 마스터링</label><input type="number" id="r_mixmaster" min="0" step="1000"></div>
     </div>
+    <h3 style="margin:18px 0 6px;font-size:.95rem">영어 화면 가격 (달러)</h3>
+    <p class="hint">영어(EN)로 보는 방문자에게는 아래 달러 가격이 표시돼요. 비워두면 300 · 80 · 350달러로 나와요.</p>
+    <div class="price">
+      <div><label>믹싱 ($)</label><input type="number" id="u_mix" min="0" step="1"></div>
+      <div><label>마스터링 ($)</label><input type="number" id="u_master" min="0" step="1"></div>
+      <div><label>믹싱 + 마스터링 ($)</label><input type="number" id="u_mixmaster" min="0" step="1"></div>
+    </div>
   </section>
 
   <section class="card">
@@ -196,6 +203,8 @@ textarea{white-space:pre-wrap;line-height:1.55}
     tri($("#e_session"), e.session, false, o => e.session = o);
     renderPhoto();
     renderGear();
+    C.ratesUSD = C.ratesUSD || {};
+    ["mix", "master", "mixmaster"].forEach(k => { const i = $("#u_" + k); i.value = C.ratesUSD[k] || ""; i.oninput = () => { C.ratesUSD[k] = Math.max(0, Math.round(+i.value || 0)); touch(); }; });
     ["mix", "master", "mixmaster"].forEach(k => { const i = $("#r_" + k); i.value = C.rates[k] || ""; i.oninput = () => { C.rates[k] = Math.max(0, Math.round(+i.value || 0)); touch(); }; });
     $("#discOpen").checked = !!C.discographyOpen; $("#discOpen").onchange = ev => { C.discographyOpen = ev.target.checked; touch(); };
     renderDiscs(); renderArtists();
