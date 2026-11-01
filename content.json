@@ -91,7 +91,7 @@
       "artist": "The Atomic",
       "title": "잠수 (prod. The Atomic) / Youth",
       "role": "Mix",
-      "cover": ""
+      "cover": "covers/mvxqx8eo-the-atomic_youth.jpg"
     },
     {
       "year": 2022,
@@ -116,39 +116,39 @@
       "credit": "Mix · Master",
       "spotify": "https://open.spotify.com/album/3NytaPbtK6PqQwDxNMPzcs?si=0a27e6c63dab4cfc",
       "intro": {
-        "ko": "요. 갓 댐~ 난 자동차를 할부를 갚고있어. 나한테 돈 후원해줄 사람~?",
-        "ja": "よっ。ガッデム〜 車のローン返済中なんだ。俺に金を援助してくれる人〜?",
-        "en": "Yo. God damn~ I'm still paying off my car. Anybody wanna sponsor me~?"
+        "ko": "",
+        "ja": "",
+        "en": ""
       }
     },
     {
-      "name": "ARTIST 02",
+      "name": "",
       "credit": "Mix",
       "spotify": "",
       "intro": {
-        "ko": "안녕, 난 ARTIST 02야",
-        "ja": "やあ、ARTIST 02だよ。僕の曲、聴いてみる?",
-        "en": "Hi, I'm ARTIST 02. Wanna hear my song?"
+        "ko": "",
+        "ja": "",
+        "en": ""
       }
     },
     {
-      "name": "ARTIST 03",
-      "credit": "Mix · Master",
+      "name": "",
+      "credit": "",
       "spotify": "",
       "intro": {
-        "ko": "안녕, 난 ARTIST 03이야",
-        "ja": "やあ、ARTIST 03だよ。私の曲、聴いてみる?",
-        "en": "Hi, I'm ARTIST 03. Wanna hear my song?"
+        "ko": "",
+        "ja": "",
+        "en": ""
       }
     },
     {
-      "name": "ARTIST 04",
-      "credit": "Master",
+      "name": "",
+      "credit": "",
       "spotify": "",
       "intro": {
-        "ko": "안녕, 난 ARTIST 04야",
-        "ja": "こんにちは、ARTIST 04です。私の曲、聴いてみる?",
-        "en": "Hi, I'm ARTIST 04. Wanna hear my song?"
+        "ko": "",
+        "ja": "",
+        "en": ""
       }
     }
   ],
