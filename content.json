@@ -66,27 +66,6 @@
   "discographyOpen": true,
   "discography": [
     {
-      "year": 2026,
-      "artist": "Sample Artist",
-      "title": "Night Drive",
-      "role": "Mix · Master",
-      "cover": ""
-    },
-    {
-      "year": 2026,
-      "artist": "Sample Artist",
-      "title": "Paper Moon (EP)",
-      "role": "Rec · Mix",
-      "cover": ""
-    },
-    {
-      "year": 2025,
-      "artist": "Sample Band",
-      "title": "Static",
-      "role": "Mix",
-      "cover": ""
-    },
-    {
       "year": 2023,
       "artist": "The Atomic",
       "title": "잠수 (prod. The Atomic) / Youth",
