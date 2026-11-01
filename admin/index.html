@@ -41,6 +41,7 @@ input:focus,textarea:focus{outline:2px solid rgba(31,47,90,.35);outline-offset:1
 .list{display:flex;flex-direction:column;gap:12px}
 .item{background:rgba(255,255,255,.45);border:1px solid var(--line);border-radius:6px;padding:14px}
 .item .tools{display:flex;gap:6px;justify-content:flex-end;margin-top:10px;flex-wrap:wrap}
+.featchk{display:inline-flex;align-items:center;gap:6px;font-size:.82rem;font-weight:600;margin-right:auto;white-space:nowrap}.featchk input{width:auto}
 .disc{display:grid;grid-template-columns:96px 1fr;gap:14px}
 .cover{width:96px;height:96px;border-radius:4px;background:#d9ccb0 center/cover no-repeat;display:grid;place-items:center;font-size:.72rem;color:var(--muted);text-align:center;border:1px dashed rgba(42,34,26,.3);cursor:pointer;overflow:hidden}
 .disc .f{display:grid;grid-template-columns:90px 1fr 1fr;gap:8px}
@@ -219,8 +220,11 @@ textarea{white-space:pre-wrap;line-height:1.55}
           <div><label>역할</label><input type="text" data-i="${i}" data-k="role" value="${esc(d.role)}" placeholder="Mix · Master"></div>
           <div class="wide"><label>곡 / 앨범 제목</label><input type="text" data-i="${i}" data-k="title" value="${esc(d.title)}"></div>
         </div></div>
-        <div class="tools"><button class="btn ghost sm" data-mv="${i}" data-d="-1">↑ 위로</button><button class="btn ghost sm" data-mv="${i}" data-d="1">↓ 아래로</button>${d.cover ? `<button class="btn ghost sm" data-nocover="${i}">커버 빼기</button>` : ""}<button class="btn ghost sm" data-del="${i}">삭제</button></div></div>`).join("") || `<p class="hint">아직 곡이 없어요.</p>`;
+        <div class="tools"><label class="featchk"><input type="checkbox" data-feat="${i}" ${d.feat ? "checked" : ""}> 메인에 표시</label><button class="btn ghost sm" data-mv="${i}" data-d="-1">↑ 위로</button><button class="btn ghost sm" data-mv="${i}" data-d="1">↓ 아래로</button>${d.cover ? `<button class="btn ghost sm" data-nocover="${i}">커버 빼기</button>` : ""}<button class="btn ghost sm" data-del="${i}">삭제</button></div></div>`).join("") || `<p class="hint">아직 곡이 없어요.</p>`;
   }
+  $("#discs").onchange = ev => { const t = ev.target; if (t.dataset.feat == null) return; const d = C.discography[+t.dataset.feat];
+    if (t.checked && C.discography.filter(x => x.feat).length >= 3){ t.checked = false; alert("메인에는 3개까지만 표시할 수 있어요. 다른 곡의 체크를 먼저 해제해 주세요."); return; }
+    if (t.checked) d.feat = true; else delete d.feat; touch(); };
   $("#discs").oninput = ev => { const t = ev.target; if (t.dataset.i == null) return; const d = C.discography[+t.dataset.i]; d[t.dataset.k] = t.dataset.k === "year" ? (+t.value || "") : t.value; touch(); };
   $("#discs").onclick = ev => {
     const t = ev.target.closest("[data-cover],[data-mv],[data-del],[data-nocover]"); if (!t) return; const D = C.discography;
