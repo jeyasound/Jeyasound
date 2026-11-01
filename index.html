@@ -315,6 +315,11 @@ p{margin:0}
   *,*::before,*::after{transition-duration:.01ms!important;animation:none!important}
 }
 
+.hs span{font-family:var(--f-display)!important;font-stretch:108%;font-weight:700;font-size:.84rem!important;letter-spacing:.01em!important;text-transform:none!important;padding:5px 11px!important;border-radius:3px;line-height:1.2;transform:translateY(calc(-50% + var(--dy,0px)))!important;opacity:.97}
+.hs.rm span{left:50%;top:auto;bottom:calc(50% + 14px + var(--up,0px));transform:translateX(calc(-50% - var(--sh,0px)))!important}
+.hs.rm span::after{content:"";position:absolute;left:calc(50% + var(--sh,0px));top:100%;width:2px;height:calc(var(--up,0px) + 6px);background:var(--paper);margin-left:-1px}
+@media (max-width:640px){.hs span{font-size:.8rem!important;padding:4px 10px!important}}
+
 .quick .pick-l{font-size:.74rem!important}
 .quick button{font-size:.98rem!important;padding:8px 14px!important}
 @media (max-width:820px){.quick button{font-size:1rem!important;padding:10px 16px!important}.quick .pick-l{font-size:.76rem!important}}
@@ -2021,7 +2026,7 @@ function buildLabels(){
   });
   markers.forEach(m => m.el.remove()); markers = [];
   roomObjs.forEach(rec => rec.hot.forEach(h => {
-    const el = document.createElement("button"); el.type = "button"; el.className = "hs"; el.dataset.room = rec.e.id;
+    const el = document.createElement("button"); el.type = "button"; el.className = "hs rm"; el.dataset.room = rec.e.id;
     el.innerHTML = `<i></i><span>${esc(tabLabel(h.tab))}</span>`; el.setAttribute("aria-label", tabLabel(h.tab));
     el.onclick = () => openPanel(h.tab);
     $("#hotspots").appendChild(el); markers.push({ el, rec, h });
@@ -2042,7 +2047,19 @@ function placeOverlay(){
     const vis = _v.z < 1 && Math.abs(_v.x) < 1.05 && Math.abs(_v.y) < 1.05;
     el.classList.toggle("on", vis);
     el.style.transform = `translate(${((_v.x + 1) / 2 * W).toFixed(1)}px,${((1 - _v.y) / 2 * H).toFixed(1)}px)`;
+    el._sx = (_v.x + 1) / 2 * W; el._sy = (1 - _v.y) / 2 * H;
   });
+  if (show){   // tags sit exactly above their dot; if two would overlap, the later one steps up on a stem
+    const placed = [], vis = markers.filter(m => m.el.classList.contains("on")).sort((a, b) => a.el._sy - b.el._sy || a.el._sx - b.el._sx);
+    vis.forEach(({ el }) => {
+      const sp = el.lastChild, w = sp.offsetWidth || 90, h = (sp.offsetHeight || 24) + 5; let up = 0, n = 0;
+      const box = () => { const x0 = Math.min(Math.max(el._sx - w / 2, 4), W - w - 4), y1 = el._sy - 16 - up; return [x0, y1 - h, x0 + w, y1, x0 - (el._sx - w / 2)]; };
+      const hit = b => placed.some(p => b[0] < p[2] && b[2] > p[0] && b[1] < p[3] && b[3] > p[1]);
+      while (hit(box()) && n++ < 10) up += h;
+      const b = box(); placed.push(b);
+      el.style.setProperty("--up", up + "px"); el.style.setProperty("--sh", (-b[4]).toFixed(1) + "px");
+    });
+  }
 }
 
 /* ---------- frame loop ---------- */
@@ -2629,7 +2646,7 @@ function buildCorridorExtras(){
     } else { rec.frames = new THREE.Group(); rec.g.add(rec.frames); [0, 1].forEach(k => frameOn(rec.frames, -.95 + k * .7, 1.1, zf, .42, .52, artTexture(k + rec.R.i))); }
     buildLookExtras(rec);
   });
-  applyBasementRoom(); guideToActiveRoom();
+  applyBasementRoom(); loftZone(); guideToActiveRoom();
   { const n0 = scene.children.length; furnishLobby(); buildArtists(); markLobbyOnly(n0); }
   trimShadowCasters(); sharpenTextures();
 }
@@ -2828,12 +2845,12 @@ function v15Tick(t){
 function buildPicker(){
   buildLooksUI(); bgmUI();
   const box = $("#pickEng"); if (!box) return;
-  box.innerHTML = ENGINEERS.map((e, i) => `<button type="button" data-room="${e.id}" class="${e.status === "active" ? "" : "soon"}" aria-label="${esc(e.status === "active" ? e.name : e.room + " · " + L().hiring)}">${esc(e.status === "active" ? e.name : String(i + 1))}</button>`).join("");
+  box.innerHTML = ENGINEERS.filter(e => e.status === "active").map((e, i) => `<button type="button" data-room="${e.id}" class="${e.status === "active" ? "" : "soon"}" aria-label="${esc(e.status === "active" ? e.name : e.room + " · " + L().hiring)}">${esc(e.status === "active" ? e.name : String(i + 1))}</button>`).join("");
   box.querySelectorAll("[data-room]").forEach(b => { b.onclick = () => { if (state.mode === "hall" && camMode === "hall") enterRoom(b.dataset.room); }; b.onmouseenter = () => state.mode === "hall" && hoverRoom(roomObjs.find(r => r.e.id === b.dataset.room)); b.onmouseleave = () => state.mode === "hall" && hoverRoom(null); });
   if (!$("#v15lbl")){ const st = document.createElement("style"); st.id = "v15lbl"; st.textContent = ".label3d:not(.desk-l){display:none!important}.desk-l .lb{transform:translate(-50%,-50%)!important;background:#a8352b!important;color:#fff4ea!important;border:0!important;box-shadow:0 8px 22px rgba(0,0,0,.45)!important}.desk-l .lb small{color:rgba(255,236,220,.8)!important}"; document.head.appendChild(st); }
   if (deskLabel) deskLabel.remove(); deskLabel = null;
   lobbyHs.forEach(o => o.el.remove()); lobbyHs = [];
-  const T = { ko: ["JEYA 방 들어가기", "믹싱 예약하기"], ja: ["JEYAの部屋に入る", "ミックスを予約"], en: ["Enter JEYA's room", "Book a mix"] }[state.lang] || [];
+  const T = { ko: ["믹싱 의뢰하기", "믹싱 예약하기"], ja: ["ミックスを依頼する", "ミックスを予約"], en: ["Request a mix", "Book a mix"] }[state.lang] || [];
   const TD = { ko: "디스코그래피", ja: "ディスコグラフィ", en: "Discography" }[state.lang];
   const TG = { ko: "스템 보내기 전 확인", ja: "ステム送付前の確認", en: "Before you send stems" }[state.lang];
   [["room", T[0], () => enterRoom(ENGINEERS.find(e => e.status === "active").id)]].forEach(([key, text, act]) => {
@@ -2848,7 +2865,7 @@ let lobbyHs = [];
 function placeDesk(){
   const show = state.mode === "hall" && !atDesk && camMode === "hall" && !panelOpen;
   lobbyHs.forEach(({ el, key }) => {
-    if (key === "room"){ const rec = roomObjs.find(r => r.active); if (!rec) return; rec.g.localToWorld(_dv.set((DOOR.x0 + DOOR.x1)/2, 1.25, RD/2 + .12)); }
+    if (key === "room"){ const rec = roomObjs.find(r => r.active); if (!rec) return; rec.g.localToWorld(_dv.set(0, 1.5, SOFA.z + 1.2)); }
     else if (key === "piano"){ if (!PIANO.group || pianoOn) { el.classList.remove("on"); return; } PIANO.group.localToWorld(_dv.set(0, .78, 1.0)); }
     else if (key === "disco"){ const rec = roomObjs.find(r => r.active); if (!rec) return; rec.g.localToWorld(_dv.set(-.67, 1.62, RD/2 + .05)); }
     else _dv.set(DESK.x - .1, 1.0, DESK.z);
@@ -3455,11 +3472,9 @@ let doorHalo = null, floorDots = [];
 function guideToActiveRoom(){
   const rec = roomObjs.find(r => r.active); if (!rec) return;
   const m = mat({ color: 0xffe2b8, emissive: 0xffb860, emissiveIntensity: 1, roughness: .3 }); doorHalo = m;
-  const z = RD/2 + .014;
-  [[DOOR.x0 - .075, DOOR.h/2 + .03, .025, DOOR.h + .1], [DOOR.x1 + .075, DOOR.h/2 + .03, .025, DOOR.h + .1], [(DOOR.x0 + DOOR.x1)/2, DOOR.h + .095, DOOR.x1 - DOOR.x0 + .175, .025]]
-    .forEach(([x, y, w, h]) => mesh(box(w, h, .012), m, rec.g, x, y, z, { cast: false }));
+  // (v16: no door any more — the runway ends at the mixing zone's opening)
   // runway of small floor lights from the doorway to JEYA's door
-  const dx = (DOOR.x0 + DOOR.x1)/2, end = rec.g.localToWorld(new THREE.Vector3(dx - .1, 0, RD/2 + .35));
+  const end = rec.g.localToWorld(new THREE.Vector3(0, 0, SOFA.z + 1.35));
   const pts = [V15(LOFT.x0 + .6, 0, 1.45), V15(end.x, 0, end.z)];
   let total = 0; const segs = []; for (let i = 1; i < pts.length; i++){ const L = pts[i].distanceTo(pts[i - 1]); segs.push([pts[i - 1], pts[i], L, total]); total += L; }
   const geo = new THREE.BoxGeometry(.11, .008, .035);
@@ -4204,13 +4219,11 @@ function furnishLobby(){
   [ZL + .06].forEach((z, i) => [-6.6, -3.4].forEach(x => { mesh(box(.12, .2, .08), M.brass, scene, x, 2.0, z); mesh(new THREE.SphereGeometry(.06, 14, 10), M.globe, scene, x, 2.12, z + (i ? -.06 : .06), { cast: false }); }));
   // plants
   retroTV(); coffeeBar(); uprightPiano(); wallClock(); wallCalendar();
-  [[XE - 1.5, -2.5], [XE - 1.5, 2.4], [LOFT.x0 + 1.6, 5.6]].forEach(([x, z]) => hangingPlant(x, z));
+  [[XE - 1.5, -2.5], [XE - 1.5, 5.3], [LOFT.x0 + 1.6, 5.6]].forEach(([x, z]) => hangingPlant(x, z));
   // two bluetooth tallboy speakers in the back corners
   const aim = V15(LOFT.x0, 0, 1.45);
   tallboy(XE - .6, ZL + 1.55, aim); tallboy(XE - .6, ZR - 1.55, aim);
   // a big soft rug under the lounge corner and a long runner to JEYA's door
-  mesh(new THREE.CylinderGeometry(1.55, 1.55, .012, 48), mat({ color: 0x8a5a3a, roughness: .95 }), scene, -5.05, .006, -3.7, { cast: false });
-  mesh(new THREE.CylinderGeometry(1.4, 1.4, .013, 48), mat({ color: 0xb07a4e, roughness: .95 }), scene, -5.05, .007, -3.7, { cast: false });
   const rec = roomObjs.find(r => r.active); if (rec) rec.door.rotation.y = 0;
 }
 
@@ -4228,7 +4241,7 @@ function cafeTable(x, z){
   return g;
 }
 function lobbyObstacles(){
-  OBST = [{ x: -5.05, z: -3.7, r: 1.2 },
+  OBST = [
     { x: -5.8, z: ZL + .28, r: .45 }, { x: -5.0, z: ZL + .28, r: .45 }, { x: -4.2, z: ZL + .28, r: .45 },   // monitor credenza
     { x: -6.05, z: ZR - .35, r: .45 }, { x: -5.1, z: ZR - .35, r: .45 }, { x: -4.15, z: ZR - .35, r: .45 }, // espresso bar
     { x: -4.35, z: ZR - 1.02, r: .28 }, { x: -5.45, z: ZR - 1.02, r: .28 },                                 // bar stools
@@ -4240,7 +4253,7 @@ function lobbyObstacles(){
     const p = { x, z };
     if (OBST.some(o => Math.hypot(o.x - x, o.z - z) < o.r + .55)) continue;
     if (doorZ.some(dz => x > XE - 1.7 && Math.abs(z - dz) < 1.05)) continue;      // never park in front of a door
-    if (x < LOFT.x0 + 2.2 && Math.abs(z - 1.45) < 1.4) continue;                   // keep the entrance view clear
+    if (x < LOFT.x0 + 3.6 && Math.abs(z - 1.45) < 2.3) continue;                   // keep the entrance view clear
     if (Math.abs(z - 1.45) < .7) continue;                                          // and the sightline to JEYA's door
     SPOTS.push(p);
   }
@@ -4269,7 +4282,6 @@ function buildArtists(){
   const skin = [0xe9bf98, 0xc98d64, 0xf0cfa8, 0x9a6440].map(c => mat({ color: c, roughness: .32 }));
   const C = c => mat({ color: c, roughness: .4 });
   const hair = [C(0x1d1a18), C(0x3a2416), C(0x111010), C(0x5a3a22)];
-  cafeTable(-5.05, -3.7);
   const mk = (i, kind, x, z, yaw, o, extra) => {
     const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = yaw; scene.add(g);
     const f = figure(g, { pose: "stand", ...o }); if (extra) extra(f);
@@ -4279,9 +4291,9 @@ function buildArtists(){
   // 1 — hip: mustard track jacket, black cargo, backwards red cap, shades, gold chain
   mk(0, "hip", -6.2, ZL + 1.4, 2.4, { top: C(0xd99a2b), pants: C(0x1f1d1c), skin: skin[1], style: "cap", capMat: C(0xb3322a), glasses: true, chain: true, baggy: true, shoe: C(0xefe8dc), arms: [[.12, .35], [.12, .35]] });
   // 2 — guitarist, 4 walks with them: the two of them talk wherever they stop
-  const g2 = mk(1, "guitar", -3.6, -3.0, 2.0, { top: C(0x7a3a2c), pants: C(0x41618a), skin: skin[0], style: "hair", hairMat: hair[1], arms: [[.8, 1.3], [.5, .6]] },
+  const g2 = mk(1, "guitar", -4.8, -5.6, 2.0, { top: C(0x7a3a2c), pants: C(0x41618a), skin: skin[0], style: "hair", hairMat: hair[1], arms: [[.8, 1.3], [.5, .6]] },
     f => { const gt = acousticGuitar(f.torso); gt.position.set(.05, .04, -.22); gt.rotation.set(0, 0, Math.PI - .35); });
-  const g4 = mk(3, "coffee", -3.6, -2.15, 1.0, { top: C(0xe6d8bd), pants: C(0x6b4a32), skin: skin[2], style: "bun", hairMat: hair[3], arms: [[1.15, 1.75], [.12, .35]] },
+  const g4 = mk(3, "coffee", -6.0, -4.9, 1.0, { top: C(0xe6d8bd), pants: C(0x6b4a32), skin: skin[2], style: "bun", hairMat: hair[3], arms: [[1.15, 1.75], [.12, .35]] },
     f => coffeeCup(f.arms[0].el, 0, -.21, -.05, 0, C(0xf3efe6)));
   g4.leader = g2; g2.buddy = g4;
   // 3 — headphones on, nodding along
@@ -5389,7 +5401,7 @@ async function loadContent(){
       }
     }
     if (e && Array.isArray(c.discography)){
-      const list = c.discography.filter(d => d && d.title).map(d => ({ year: +d.year || "", artist: String(d.artist || ""), title: String(d.title), role: String(d.role || ""), cover: d.cover ? String(d.cover) : undefined }));
+      const list = c.discography.filter(d => d && d.title).map(d => ({ year: +d.year || "", artist: String(d.artist || ""), title: String(d.title), role: String(d.role || ""), cover: d.cover ? String(d.cover) : undefined, feat: d.feat === true }));
       if (list.length) e.discography = list;
     }
     if (Array.isArray(c.artists)) c.artists.slice(0, ARTISTS.length).forEach((a, i) => {
@@ -5399,6 +5411,350 @@ async function loadContent(){
     });
     if (c.easterEgg && Array.isArray(c.easterEgg.notes) && c.easterEgg.notes.length) EGG.notes = c.easterEgg.notes.map(String);
   } catch(err){ console.warn("content.json not used", err); }
+}
+
+
+/* ---------- booking: the request form really sends now (POST /api/book → Resend → your inbox) ---------- */
+(function(){
+  Object.assign(I18N.ko, { fLink: "참고 음원 링크", linkHint: "구글 드라이브 · 드롭박스 · 유튜브 등 들어볼 수 있는 링크 (선택)", eLink: "링크 주소를 확인해 주세요 (https://로 시작해요).",
+    sending: "보내는 중…", doneNote: "신청서가 접수됐어요. 적어 주신 이메일로 곧 답장 드릴게요.", sendFail: "보내지 못했어요. 잠시 뒤 다시 눌러 주세요." });
+  Object.assign(I18N.ja, { fLink: "リファレンス音源のリンク", linkHint: "Googleドライブ・Dropbox・YouTubeなど、聴けるリンク（任意）", eLink: "リンクを確認してください（https://で始まります）。",
+    sending: "送信中…", doneNote: "申込書を受け付けました。ご記入のメールアドレスにまもなくご返信します。", sendFail: "送信できませんでした。少し時間をおいてもう一度お試しください。" });
+  Object.assign(I18N.en, { fLink: "Reference audio link", linkHint: "Google Drive, Dropbox, YouTube… any link we can listen to (optional)", eLink: "Check the link (it should start with https://).",
+    sending: "Sending…", doneNote: "Your request is in. We'll reply to the email you gave us soon.", sendFail: "We couldn't send it. Please try again in a moment." });
+  const w = $("#w-file"); if (!w) return;
+  w.id = "w-link";
+  w.innerHTML = `<label for="f-link"><span data-i="fLink"></span></label>
+    <input type="url" id="f-link" name="link" inputmode="url" placeholder="https://drive.google.com/…" aria-describedby="h-link e-link">
+    <span class="hint" id="h-link" data-i="linkHint"></span><span class="err" id="e-link"></span>`;
+  const hp = document.createElement("div"); hp.setAttribute("aria-hidden", "true"); hp.style.cssText = "position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden";
+  hp.innerHTML = `<input type="text" id="f-website" name="website" tabindex="-1" autocomplete="off">`; w.after(hp);
+  const fail = document.createElement("p"); fail.className = "send-fail"; fail.setAttribute("role", "alert"); w.parentNode.querySelector(".sh-foot").after(fail);
+  const st = document.createElement("style"); st.textContent = `.send-fail{margin:10px 0 0;color:#b8352b;font-size:.9rem;word-break:keep-all}.send-fail:empty{display:none}.btn-stamp[disabled]{opacity:.6;cursor:default}`; document.head.appendChild(st);
+  w.querySelectorAll("[data-i]").forEach(el => { const v = L()[el.dataset.i]; if (v != null) el.textContent = v; });
+  let sending = false;
+  $("#sheet").addEventListener("submit", async ev => {
+    ev.preventDefault(); ev.stopImmediatePropagation();
+    if (sending || $("#sheet").classList.contains("done")) return;
+    const t = L(), v = id => $(id).value.trim(), isUrl = s => /^https?:\/\/\S+$/i.test(s);
+    const errs = {
+      name: v("#f-name") ? "" : t.eName,
+      email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v("#f-email")) ? "" : t.eEmail,
+      phone: v("#f-phone").replace(/\D/g, "").length >= 7 ? "" : t.ePhone,
+      spotify: !v("#f-spotify") || SPOTIFY.test(v("#f-spotify")) ? "" : t.eSpotify,
+      link: !v("#f-link") || isUrl(v("#f-link")) ? "" : t.eLink
+    };
+    let first = null;
+    Object.entries(errs).forEach(([k, m]) => { $("#e-" + k).textContent = m; $("#f-" + k).setAttribute("aria-invalid", !!m); if (m && !first) first = $("#f-" + k); });
+    fail.textContent = "";
+    if (first){ first.focus(); return; }
+    const btn = $("#sheet .btn-stamp"), label = btn.textContent, e = ENGINEERS.find(x => x.id === state.bookFor);
+    sending = true; btn.disabled = true; btn.textContent = t.sending;
+    try {
+      const r = await fetch("/api/book", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
+        name: v("#f-name"), email: v("#f-email"), phone: v("#f-phone"), spotify: v("#f-spotify"), link: v("#f-link"),
+        engineer: e ? e.name : "", no: $("#shNo").textContent, lang: state.lang, website: $("#f-website").value }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.ok) throw new Error(j.error || r.status);
+      $("#doneNote").textContent = L().doneNote; $("#sheet").classList.add("done");
+    } catch(err){
+      console.warn("booking failed", err); fail.textContent = L().sendFail;
+    }
+    sending = false; btn.disabled = false; btn.textContent = label;
+  }, true);
+  // a fresh sheet each time it opens
+  { const ob0 = openBook; openBook = function(){ fail.textContent = ""; return ob0.apply(this, arguments); }; }
+  { const fm0 = fillSheetMeta; fillSheetMeta = function(){ fm0(); const e = ENGINEERS.find(x => x.id === state.bookFor); if (e) $("#fEng").textContent = e.name; }; }
+})();
+
+/* =========================================================
+   v16 — OPEN LOFT
+   No more three closed rooms: JEYA works in an open mixing zone inside the loft.
+   The active room's group (rec.g) is kept as the zone's frame of reference, so every
+   seated / sheet / headphones / shelf / contract interaction keeps working; its shell
+   (walls, door, ceiling, facade) is hidden and the zone is built around the desk:
+   a curved wall of navy tube traps behind the monitors that turns into black gobos
+   on both sides, the artist's couch behind the engineer with a sub-monitor, an
+   acoustic cloud, discography frames + a record credenza on the lounge side.
+   ========================================================= */
+const ZONE = { gx: -3.8, gz: 1.45, sofaZ: -.35, tubeZ: -3.05, r: .24, rc: 1.0, gobos: 2 };
+let zoneRec = null, zoneHit = null;
+function zoneMouth(y = 0){ return loc(zoneRec, 0, y, ZONE.sofaZ + 1.45); }
+
+function loftZone(){
+  const rec = roomObjs.find(r => r.active); if (!rec) return; zoneRec = rec;
+  // 1) empty rooms go away entirely (and can't be clicked)
+  roomObjs.forEach(r => { r.looks = null; if (r.active) return; r.g.visible = false; const i = pickables.indexOf(r.pick); if (i >= 0) pickables.splice(i, 1); r.hot = []; });
+  // 2) move JEYA's room frame into the loft
+  rec.g.position.set(ZONE.gx, 0, ZONE.gz); rec.g.updateMatrixWorld(true);
+  const dz = ZONE.sofaZ - SOFA.z;
+  const ct = rec.sheet && rec.sheet.parent, chairG = rec.person && rec.person.root.parent;
+  const near = (o, x, z) => Math.abs(o.position.x - x) < .02 && Math.abs(o.position.z - z) < .02;
+  const sofaG = rec.g.children.find(o => o.isGroup && near(o, SOFA.x, SOFA.z));
+  const stool = rec.g.children.find(o => o.isGroup && near(o, SOFA.x - 1.22, SOFA.z - .15));
+  const keep = new Set([chairG, ct, sofaG, stool, rec.shelf, rec.lamp && rec.lamp.group, rec.pick].filter(Boolean));
+  rec.g.children.forEach(o => { if (!keep.has(o) && !o.isLight) o.visible = false; });
+  if (rec.outline) rec.outline.visible = false;
+  [sofaG, stool].forEach(o => { if (o) o.position.z += dz; });
+  // no couch: a long low table in its place, the three things you can pick up spaced well apart
+  if (sofaG) sofaG.visible = false; if (stool) stool.visible = false;
+  if (ct){
+    ct.position.set(0, 0, ZONE.sofaZ - .1); ct.rotation.y = 0;
+    const items = new Set([rec.sheet, rec.contract, rec.hp && (rec.hp.userData.set || rec.hp)].filter(Boolean));
+    ct.children.forEach(o => { if (o.isMesh && !items.has(o) && o.position.y < .45 && !(o.geometry && o.geometry.type === "CylinderGeometry")) o.visible = false; });
+    mesh(rbox(3.0, .05, .6, .012), M.walnut, ct, 0, .4, 0);
+    [-1, 1].forEach(sx => [-1, 1].forEach(sz => mesh(rbox(.06, .38, .06, .01), M.walnut, ct, sx * 1.42, .19, sz * .24)));
+    const put = (o, x) => { if (o) o.position.x = x; };
+    put(rec.sheet, -.95); put(rec.contract, .95); put(rec.hp && (rec.hp.userData.set || rec.hp), 0);
+    const at = { rates: [-.95, .47], ba: [0, .52], book: [.95, .47] };
+    rec.hot.forEach(h => { const a = at[h.tab]; if (a) h.at.set(ct.position.x + a[0], a[1], ct.position.z); });
+  }
+  if (rec.lamp) rec.lamp.group.position.set(RW / 2 - .35, 0, ZONE.sofaZ + .2);
+  SOFA.z = ZONE.sofaZ;
+  // the click target: just the zone's footprint
+  const depth = (ZONE.sofaZ + .5) - ZONE.tubeZ;
+  rec.pick.geometry.dispose(); rec.pick.geometry = box(RW, 2.2, depth); rec.pick.position.set(0, 1.1, ZONE.tubeZ + depth / 2);
+  buildZone(rec);
+  // the big bookshelf goes; a small record crate on a low stand left of the couch takes its place
+  if (rec.shelf) rec.shelf.visible = false;
+  const crate = recordCrate(rec); rec.hot.forEach(h => { if (h.tab === "disco") h.at.set(crate.position.x, 1.0, crate.position.z); });
+  { const n0 = scene.children.length; buildLounge(); zoneLobbyExtra = scene.children.slice(n0).filter(o => !o.isLight); }
+  zoneShadowsOff(rec);
+}
+let zoneLobbyExtra = [];
+
+function zoneMats(){
+  if (M.tubeFab) return;
+  const noise = (base, a, b) => tex(cnv(256, 512, (q, w, h) => { q.fillStyle = base; q.fillRect(0, 0, w, h);
+    for (let i = 0; i < 9000; i++){ q.fillStyle = Math.random() < .5 ? a : b; q.fillRect(Math.random() * w, Math.random() * h, 1.5, 1.5); }
+    for (let y = 0; y < h; y += 3){ q.fillStyle = "rgba(0,0,0,.035)"; q.fillRect(0, y, w, 1); } }));
+  M.tubeFab = mat({ map: noise("#2c3874", "rgba(10,14,40,.18)", "rgba(140,155,230,.09)"), roughness: 1 });
+  M.goboFab = mat({ map: noise("#17171a", "rgba(0,0,0,.25)", "rgba(255,255,255,.035)"), roughness: 1 });
+  M.tubeCap = mat({ color: 0x14151a, roughness: .8 });
+  M.tubeBase = mat({ color: 0x111113, roughness: .6 });
+  M.pine = mat({ color: 0xc9a676, roughness: .6 });
+  M.deskDark = mat({ color: 0x2a160a, roughness: .45 });
+  M.consoleFrame = mat({ color: 0x5a3018, roughness: .5 });
+  M.spk = mat({ color: 0x0b0b0c, roughness: .45 });
+  M.cone = mat({ color: 0x050505, roughness: .3 });
+}
+function consoleTexture(){
+  return tex(cnv(768, 360, (q, w, h) => { q.scale(.75, .75); w = 1024; h = 480; q.fillStyle = "#2b2d31"; q.fillRect(0, 0, w, h); q.fillStyle = "#16181b"; q.fillRect(0, 0, w, 92);
+    for (let i = 0; i < 24; i++){ const x = 18 + i * 41; q.fillStyle = "#0b0c0e"; q.fillRect(x, 14, 30, 64); const lv = 20 + ((i * 37) % 40);
+      const g = q.createLinearGradient(0, 78, 0, 14); g.addColorStop(0, "#3ad17a"); g.addColorStop(.7, "#e6c84a"); g.addColorStop(1, "#e2523c"); q.fillStyle = g; q.fillRect(x + 4, 78 - lv, 22, lv);
+      q.fillStyle = "#34373c"; q.fillRect(x, 100, 34, 370);
+      for (let k = 0; k < 4; k++){ q.fillStyle = "#c9c9c9"; q.beginPath(); q.arc(x + 17, 124 + k * 30, 8, 0, 7); q.fill(); q.fillStyle = ["#e2523c", "#3a8de0", "#e6c84a", "#ddd"][k]; q.beginPath(); q.arc(x + 17, 124 + k * 30, 3, 0, 7); q.fill(); }
+      q.fillStyle = "#111"; q.fillRect(x + 15, 250, 4, 200); q.fillStyle = "#d9d9d9"; q.fillRect(x + 5, 280 + ((i * 53) % 140), 24, 16); } }));
+}
+let dawTex = null;
+function dawTexture(){
+  if (dawTex) return dawTex;
+  return (dawTex = tex(cnv(512, 300, (q, w, h) => { q.fillStyle = "#14202c"; q.fillRect(0, 0, w, h); q.fillStyle = "#0e1822"; q.fillRect(0, 0, w, 18);
+    const cols = ["#e3b56a", "#7fd3c2", "#e07a5f", "#9db4ff"];
+    for (let r = 0; r < 8; r++){ q.fillStyle = "rgba(255,255,255,.04)"; q.fillRect(0, 26 + r * 34, w, 30); q.fillStyle = cols[r % 4];
+      for (let x = 10; x < w - 10; x += 4){ const a = Math.abs(Math.sin(x * .05 + r) * Math.cos(x * .017 * (r + 1) + 1)) * 14 + 2; q.fillRect(x, 41 + r * 34 - a / 2, 3, a); } }
+    q.fillStyle = "#ffffff"; q.fillRect(w * .42, 18, 2, h - 18); })));
+}
+function tubeTrap(parent, x, z, r = ZONE.r){
+  const g = new THREE.Group(); g.position.set(x, 0, z); parent.add(g);
+  mesh(new THREE.CylinderGeometry(r, r, 2.0, 20), M.tubeFab, g, 0, 1.12, 0, { cast: false });
+  mesh(new THREE.CylinderGeometry(r * .985, r * .985, .012, 20), M.tubeCap, g, 0, 2.126, 0, { cast: false });
+  mesh(new THREE.CylinderGeometry(r * .9, r * .95, .12, 16), M.tubeBase, g, 0, .06, 0, { cast: false });
+  return g;
+}
+function gobo(parent, x, z, ry, pine){
+  const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = ry; parent.add(g);
+  const w = .95, h = 2.0;
+  mesh(box(w, h, .1), M.goboFab, g, 0, .12 + h / 2, 0);
+  if (pine){
+    [-1, 1].forEach(s => { mesh(box(.05, h * .9, .05), M.pine, g, s * (w / 2 - .12), h * .45, .09, { cast: false }); mesh(box(.05, .05, .6), M.pine, g, s * (w / 2 - .12), .025, 0, { cast: false }); });
+    [.55, 1.25].forEach(y => mesh(box(w - .2, .05, .05), M.pine, g, 0, y, .09, { cast: false }));
+  } else [-1, 1].forEach(s => mesh(box(.04, .04, .5), M.blackMetal, g, s * (w / 2 - .1), .02, 0, { cast: false }));
+  return g;
+}
+function nearfield(parent, x, y, z, lookX, lookZ){
+  const sp = new THREE.Group(); sp.position.set(x, y, z); parent.add(sp); sp.rotation.y = Math.atan2(lookX - x, lookZ - z);
+  mesh(box(.2, .32, .24), M.spk, sp, 0, 0, 0);
+  [[-.05, .075], [.09, .03]].forEach(([yy, r]) => mesh(new THREE.CylinderGeometry(r, r * .7, .02, 24), M.cone, sp, 0, yy, .125, { rx: Math.PI / 2, cast: false }));
+  return sp;
+}
+function screenOn(parent, w, x, y, z, ry){
+  const s = new THREE.Group(); s.position.set(x, y, z); s.rotation.y = ry; parent.add(s);
+  mesh(box(w, w * .58, .04), mat({ color: 0x0e0f12, roughness: .4 }), s, 0, 0, 0);
+  mesh(new THREE.PlaneGeometry(w - .04, w * .58 - .04), new THREE.MeshBasicMaterial({ map: dawTexture(), toneMapped: false }), s, 0, 0, .022, { cast: false, receive: false });
+  return s;
+}
+
+function buildZone(rec){
+  zoneMats();
+  const g = rec.g, Z = ZONE, dz = -RD / 2 + .68;           // desk depth as built for the room
+  // curved wall of tubes: arc → straight run behind the monitors → arc, touching each other
+  const half = RW / 2, arcL = Math.PI / 2 * Z.rc, straight = RW - 2 * Z.rc, total = 2 * arcL + straight;
+  const pt = s => {
+    s -= arcL; if (s < straight) return [-half + Z.rc + s, Z.tubeZ];
+    s -= straight; const a = s / Z.rc - Math.PI / 2; return [half - Z.rc + Z.rc * Math.cos(a), Z.tubeZ + Z.rc + Z.rc * Math.sin(a)];
+  };
+  // left arc: from (-half, tubeZ+rc) round to (-half+rc, tubeZ)
+  const ptL = s => { const a = Math.PI + s / Z.rc; return [-half + Z.rc + Z.rc * Math.cos(a), Z.tubeZ + Z.rc + Z.rc * Math.sin(a)]; };
+  const n = Math.round(total / (2 * Z.r)), tubes = [];
+  for (let i = 0; i < n; i++){
+    const s = Z.r + i * (total - 2 * Z.r) / (n - 1);
+    const [x, z] = s < arcL ? ptL(s) : pt(s);
+    tubes.push([x, z]); tubeTrap(g, x, z);
+  }
+  // nearfields on the straight-run tubes in line with the desk ends
+  [-1.2, 1.2].forEach(tx => { let best = tubes[0]; tubes.forEach(p => { if (Math.abs(p[1] - Z.tubeZ) < .01 && Math.abs(p[0] - tx) < Math.abs(best[0] - tx)) best = p; });
+    nearfield(g, best[0], 1.32, best[1] + Z.r + .11, 0, -.6); });
+  // gobos down both sides, from the end of each curve toward the lobby
+  for (let k = 0; k < Z.gobos; k++){
+    const z = Z.tubeZ + Z.rc + .475 + k * .95;
+    gobo(g, -half, z, Math.PI / 2, k % 2 === 1); gobo(g, half, z, -Math.PI / 2, k % 2 === 1);
+  }
+  // rug + desk + console + main screen
+  const rugT = tex(cnv(768, 768, (q, w, h) => { q.fillStyle = "#3b4258"; q.fillRect(0, 0, w, h);
+    for (let i = 0; i < 120; i++){ q.fillStyle = i % 2 ? "rgba(140,150,180,.18)" : "rgba(20,24,40,.25)"; q.beginPath(); q.ellipse((i * 97) % w, (i * 181) % h, 30 + (i * 13) % 80, 10 + (i * 7) % 30, i, 0, 7); q.fill(); }
+    q.strokeStyle = "rgba(200,190,170,.35)"; q.lineWidth = 10; q.strokeRect(24, 24, w - 48, h - 48); }));
+  mesh(new THREE.PlaneGeometry(RW - .4, (Z.sofaZ + .9) - (Z.tubeZ + .3)), mat({ map: rugT, roughness: 1 }), g, 0, .012, (Z.sofaZ + .9 + Z.tubeZ + .3) / 2, { rx: -Math.PI / 2, cast: false });
+  const desk = new THREE.Group(); desk.position.set(0, 0, dz); g.add(desk);
+  mesh(box(2.6, .06, .8), M.deskDark, desk, 0, .74, 0);
+  [-1.25, 1.25].forEach(x => mesh(box(.06, .72, .76), M.deskDark, desk, x, .37, 0));
+  mesh(box(2.5, .4, .03), M.deskDark, desk, 0, .5, -.37, { cast: false });
+  mesh(box(1.6, .07, .72), M.consoleFrame, desk, 0, .8, .02);
+  mesh(new THREE.PlaneGeometry(1.5, .64), mat({ map: consoleTexture(), roughness: .55 }), desk, 0, .9, .03, { rx: -Math.PI / 2 + .2, cast: false });
+  screenOn(desk, .85, 0, 1.25, -.28, 0);
+  mesh(new THREE.CylinderGeometry(.02, .02, .3, 8), M.blackMetal, desk, 0, .97, -.3, { cast: false });
+  // acoustic cloud + a warm pendant glow above the desk
+  mesh(box(3.0, .09, 2.2), M.goboFab, g, 0, 3.05, -1.4, { cast: false });
+  [[-1.3, -2.3], [1.3, -2.3], [-1.3, -.5], [1.3, -.5]].forEach(([x, z]) => mesh(new THREE.CylinderGeometry(.004, .004, 1.1, 4), M.blackMetal, g, x, 3.62, z, { cast: false, receive: false }));
+  // discography frames + record credenza on the outside of the lounge-side gobos
+  const ox = -half - .07;
+  latestDiscs(rec.e).forEach(({ d, i: di }, k) => { const f = new THREE.Group(); f.position.set(ox, 1.45, -1.75 + k * .66); f.rotation.y = -Math.PI / 2; g.add(f);
+    mesh(box(.56, .56, .03), M.blackMetal, f, 0, 0, 0, { cast: false }); mesh(new THREE.PlaneGeometry(.5, .5), mat({ map: discoCover(d, di).tex, roughness: .6 }), f, 0, 0, .017, { cast: false }); f.traverse(o => { if (o.isMesh) o.userData.lobbyDisco = true; }); zoneFrames.push(f); });
+  const cr = new THREE.Group(); cr.position.set(-half - .33, 0, -1.05); cr.rotation.y = -Math.PI / 2; g.add(cr);
+  mesh(box(2.4, .62, .4), M.walnut, cr, 0, .31, 0);
+  // one box with painted record spines instead of 46 separate sleeves (one draw call)
+  const spines = tex(cnv(512, 64, (q, w, h) => { const cols = ["#1d1d1d", "#a8352b", "#e3b56a", "#2c3874", "#d9cbb0"]; for (let k = 0; k < 46; k++){ q.fillStyle = cols[k % 5]; q.fillRect(k * w / 46, 0, w / 46 - 1, h); } }));
+  mesh(box(2.2, .3, .3), [mat({ color: 0x1d1d1d }), mat({ color: 0x1d1d1d }), mat({ color: 0x1d1d1d }), mat({ color: 0x1d1d1d }), mat({ map: spines, roughness: .7 }), mat({ map: spines, roughness: .7 })], cr, 0, .77, 0, { cast: false });
+}
+let zoneFrames = [];
+const LOUNGE = { x: -2.9, z: -3.5 };
+
+/* ---------- the lounge on the left: bouclé chairs, glass table, cognac sofa, a big plant ---------- */
+function buildLounge(){
+  const cx = LOUNGE.x, cz = LOUNGE.z;
+  const rugT = tex(cnv(768, 1024, (q, w, h) => { q.fillStyle = "#b9a58c"; q.fillRect(0, 0, w, h);
+    [["#7a3b2e", 40], ["#d8c7a8", 62], ["#5b4a6a", 80], ["#c7b08e", 110]].forEach(([c, m]) => { q.strokeStyle = c; q.lineWidth = 14; q.strokeRect(m, m, w - 2 * m, h - 2 * m); });
+    q.save(); q.translate(w / 2, h / 2); for (let r = 220; r > 20; r -= 40){ q.fillStyle = (r / 40) % 2 ? "rgba(122,59,46,.75)" : "rgba(216,199,168,.85)"; q.beginPath(); q.moveTo(0, -r * 1.3); q.lineTo(r, 0); q.lineTo(0, r * 1.3); q.lineTo(-r, 0); q.closePath(); q.fill(); } q.restore();
+    for (let i = 0; i < 24000; i++){ q.fillStyle = i % 2 ? "rgba(0,0,0,.06)" : "rgba(255,255,255,.04)"; q.fillRect((i * 97) % w, (i * 193) % h, 2, 2); } }));
+  mesh(new THREE.PlaneGeometry(3.2, 2.5), mat({ map: rugT, roughness: 1 }), scene, cx, .011, cz, { rx: -Math.PI / 2, rz: Math.PI / 2, cast: false });
+  // glass coffee table
+  const tg = new THREE.Group(); tg.position.set(cx, 0, cz); scene.add(tg);
+  mesh(box(1.0, .02, .9), mat({ color: 0xcfe3e6, roughness: .05, transparent: true, opacity: .35 }), tg, 0, .38, 0, { cast: false });
+  [[-.42, -.37], [.42, -.37], [.42, .37], [-.42, .37]].forEach(([x, z]) => mesh(new THREE.CylinderGeometry(.01, .01, .37, 6), M.blackMetal, tg, x, .19, z, { cast: false }));
+  // bouclé chairs facing the window
+  const bou = mat({ map: tex(cnv(256, 256, (q, w, h) => { q.fillStyle = "#ddd3c2"; q.fillRect(0, 0, w, h); for (let i = 0; i < 5000; i++){ q.fillStyle = i % 2 ? "rgba(120,105,85,.3)" : "rgba(255,255,255,.35)"; q.beginPath(); q.arc((i * 97) % w, (i * 61) % h, 1.6, 0, 7); q.fill(); } })), roughness: 1 });
+  [[cx - 1.25, cz - .75, Math.PI / 2 - .45], [cx - 1.25, cz + .75, Math.PI / 2 + .45]].forEach(([x, z, ry]) => { const c = new THREE.Group(); c.position.set(x, 0, z); c.rotation.y = ry; scene.add(c);
+    mesh(new THREE.SphereGeometry(.4, 18, 12), bou, c, 0, .24, 0).scale.set(1, .48, 1);
+    const b = mesh(new THREE.SphereGeometry(.4, 18, 12), bou, c, 0, .58, -.2, { rx: -.18 }); b.scale.set(.98, .95, .42); });
+  // cognac leather sofa with its back to the window
+  const s = new THREE.Group(); s.position.set(cx + 1.4, 0, cz); s.rotation.y = -Math.PI / 2; scene.add(s);
+  [[2.3, .42, .9, 0, .21, 0], [2.3, .45, .22, 0, .6, -.34], [.2, .28, .9, -1.05, .55, 0], [.2, .28, .9, 1.05, .55, 0], [1.0, .12, .66, -.55, .47, .08], [1.0, .12, .66, .55, .47, .08]]
+    .forEach(([w, h, d, x, y, z]) => mesh(rbox(w, h, d, .03), M.leather, s, x, y, z));
+  plant(scene, cx + 1.55, cz - 1.55, 1.25, M.terracotta);
+  plant(scene, XE - .45, ZONE.gz + RW / 2 + .75, 1.15, M.ceramic);
+}
+
+/* ---------- getting in and out: walk to the zone's opening, then settle on the couch ---------- */
+enterRoom = async function(id, instant){
+  atDesk = false; if (guideOut) putGuideDown(); if (artistOpen) closeArtist();
+  const rec = roomObjs.find(r => r.e.id === id); if (!rec || !rec.active) return;
+  state.room = id; state.tab = "about"; panelOpen = false; view = "seated"; busy = false; hoverRoom(null);
+  if (instant || reduce){ interiorLights(rec, true, true); camMode = "seated"; Object.assign(cam, seatedView(rec)); uiFor("room"); setTimeout(() => revealHotspots(rec), 400); setTimeout(showLookHint, 700); return; }
+  bakeLook(); camMode = "tween"; uiFor("entering"); skipFlag = false;
+  const mouth = zoneMouth(1.62), look = loc(rec, 0, 1.2, -1.6);
+  const walkMs = Math.min(1400, Math.max(500, cam.pos.distanceTo(mouth) * 220));
+  if (cam.pos.distanceTo(mouth) > .6){ await camTo({ pos: mouth, tgt: look, fov: 62 }, walkMs, ease.io, 0, .014); if (skipFlag) return; }
+  interiorLights(rec, true);
+  await camTo({ ...seatedView(rec), roll: .012 }, 950, ease.out); if (skipFlag) return;
+  cam.roll = 0; camMode = "seated"; uiFor("room"); revealHotspots(rec); showLookHint();
+};
+async function leaveRoom(){
+  if (state.mode !== "room" || busy) return;
+  Synth.stop(); resetRoomProps(); panelOpen = false; const rec = curRoom();
+  bakeLook(); camMode = "tween"; uiFor("leaving"); skipFlag = false;
+  interiorLights(rec, false);
+  await camTo({ pos: zoneMouth(1.62), tgt: loc(rec, 0, 1.4, ZONE.sofaZ + 6), fov: 62 }, 900, ease.io, 0, .012); if (skipFlag) return;
+  playerHome(); hallLook.yaw = hallLook.tyaw = 0;
+  await camTo(hallView(), 900, ease.io); if (skipFlag) return;
+  finishLeaving();
+}
+function finishLeaving(){
+  const rec = curRoom(); if (rec) interiorLights(rec, false, true);
+  playerHome(); hallLook.yaw = hallLook.tyaw = 0; Object.assign(cam, hallView()); state.room = null; camMode = "hall"; uiFor("hall");
+}
+// walking into the zone's opening takes you in
+function doorProximity(t){
+  if (!zoneRec || !PLAYER.pos || !lobbyFree() || !(PLAYER.goal || Object.values(PLAYER.keys).some(Boolean))) return;
+  // only once you've walked right up to the back of the couch
+  const p = PLAYER.pos, c = loc(zoneRec, SOFA.x, 0, ZONE.sofaZ);
+  if (Math.abs(p.z - c.z) > 1.3 || Math.hypot(p.x - c.x, p.z - c.z) > 1.45) return;
+  const fx = -Math.sin(PLAYER.yaw), fz = -Math.cos(PLAYER.yaw), dx = c.x - p.x, dz = c.z - p.z, d = Math.hypot(dx, dz) || 1;
+  if ((fx * dx + fz * dz) / d < .5) return;
+  PLAYER.goal = null; PLAYER.keys = {}; enterRoom(zoneRec.e.id);
+}
+// keep the wandering artists (and the player) out of the zone and the lounge furniture
+function zoneObstacles(){
+  if (!zoneRec) return;
+  const a = loc(zoneRec, -RW / 2, 0, ZONE.tubeZ), b = loc(zoneRec, RW / 2, 0, ZONE.sofaZ + .45);
+  const x0 = Math.min(a.x, b.x) - .2, x1 = Math.max(a.x, b.x), z0 = Math.min(a.z, b.z) - .2, z1 = Math.max(a.z, b.z) + .2;
+  for (let x = x0 + .4; x <= x1; x += .7) for (let z = z0 + .4; z <= z1; z += .7) OBST.push({ x, z, r: .5 });
+  const L = LOUNGE; OBST.push({ x: L.x, z: L.z, r: 1.0 }, { x: L.x - 1.25, z: L.z - .75, r: .45 }, { x: L.x - 1.25, z: L.z + .75, r: .45 }, { x: L.x + 1.4, z: L.z, r: .55 }, { x: L.x + 1.4, z: L.z - .85, r: .45 }, { x: L.x + 1.4, z: L.z + .85, r: .45 });
+  SPOTS = SPOTS.filter(p => !(p.x > x0 - .5 && p.z > z0 - .5 && p.z < z1 + .5) && Math.hypot(p.x - L.x, p.z - L.z) > 1.8);
+}
+{ const lo0 = lobbyObstacles; lobbyObstacles = function(){ const r = lo0.apply(this, arguments); zoneObstacles(); return r; }; }
+{ const ml0 = markLobbyOnly; markLobbyOnly = function(from){ ml0(from); lobbyOnly = lobbyOnly.concat(zoneLobbyExtra); }; }
+
+
+/* ---------- discography: the three latest releases on a low walnut stand, left of the table ---------- */
+function latestDiscs(e, n = 3){
+  const all = (e.discography || []).map((d, i) => ({ d, i })), pin = all.filter(x => x.d.feat).slice(0, n);   // chosen in admin ("메인에 표시", max 3)
+  return pin.length ? pin : all.sort((a, b) => (+b.d.year || 0) - (+a.d.year || 0) || a.i - b.i).slice(0, n);
+}
+function recordCrate(rec){
+  const g = new THREE.Group(); g.position.set(-1.3, 0, ZONE.sofaZ - .8); g.rotation.y = .3; rec.g.add(g);
+  mesh(box(.98, .46, .4), M.walnut, g, 0, .23, 0);
+  mesh(box(.98, .02, .4), M.blackMetal, g, 0, .47, 0, { cast: false });
+  latestDiscs(rec.e).forEach(({ d, i }, k) => {
+    const f = new THREE.Group(); f.position.set(-.31 + k * .31, .62, -.04); f.rotation.x = -.22; g.add(f);
+    mesh(box(.28, .28, .012), mat({ color: 0x111111, roughness: .5 }), f, 0, 0, 0, { cast: false });
+    mesh(new THREE.PlaneGeometry(.27, .27), mat({ map: discoCover(d, i).tex, roughness: .6 }), f, 0, 0, .007, { cast: false });
+  });
+  g.traverse(o => { if (o.isMesh) o.userData.tab = "disco"; });
+  return g;
+}
+async function walkToShelf(rec){ showPanel("disco"); }
+
+/* ---------- from the couch you see everything at once: JEYA at the desk, the side table (rates · B&A · booking) and the record crate ---------- */
+function seatedView(rec){
+  const tall = portrait();
+  return tall
+    ? { pos: loc(rec, -.4, 2.45, ZONE.sofaZ + 3.4), tgt: loc(rec, -.4, .45, -1.05), fov: 84, roll: 0 }
+    : { pos: loc(rec, 0, 2.0, ZONE.sofaZ + 1.75), tgt: loc(rec, 0, .62, -1.35), fov: 64, roll: 0 };
+}
+
+function pick(ev, list){
+  const r = renderer.domElement.getBoundingClientRect();
+  ndc.set((ev.clientX - r.left) / r.width * 2 - 1, -(ev.clientY - r.top) / r.height * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  const shown = o => { for (; o; o = o.parent) if (!o.visible && !(o.material && o.material === M.hit)) return false; return true; };
+  const inRoom = state.mode === "room";
+  return ray.intersectObjects(list, true).find(h => (!inRoom || !h.object.userData.room) && (h.object.material === M.hit ? !inRoom : shown(h.object)));
+}
+// lighter shadows: nothing in the zone or lounge casts except the engineer
+function zoneShadowsOff(rec){
+  const keepCast = new Set(); if (rec.person) rec.person.root.traverse(o => keepCast.add(o));
+  rec.g.traverse(o => { if (o.isMesh && !keepCast.has(o)) o.castShadow = false; });
+  zoneLobbyExtra.forEach(o => o.traverse(m => { if (m.isMesh) m.castShadow = false; }));
 }
 
 </script>
