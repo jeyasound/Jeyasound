@@ -59,7 +59,7 @@
     "photo": "covers/mvscoir2-profile.jpg"
   },
   "rates": {
-    "mix": 350000,
+    "mix": 300000,
     "master": 80000,
     "mixmaster": 350000
   },
@@ -150,5 +150,10 @@
       "G#5",
       "E6"
     ]
+  },
+  "ratesUSD": {
+    "mix": 250,
+    "master": 70,
+    "mixmaster": 300
   }
 }
