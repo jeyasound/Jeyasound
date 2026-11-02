@@ -127,6 +127,13 @@ textarea{white-space:pre-wrap;line-height:1.55}
     <h3 style="margin:18px 0 6px;font-size:.95rem">하단 안내 문구</h3>
     <p class="hint">가격표 맨 아래에 나오는 안내예요. 줄을 바꾸면 사이트에서도 그 자리에서 줄이 바뀌어요.</p>
     <div class="tri" id="rt_note" data-area="1"></div>
+    <h3 style="margin:18px 0 6px;font-size:.95rem">일본어 화면 가격 (엔)</h3>
+    <p class="hint">일본어(JP)로 보는 방문자에게는 아래 엔화 가격이 표시돼요. 비워두면 지금처럼 원화로 나와요.</p>
+    <div class="price">
+      <div><label>믹싱 (¥)</label><input type="number" id="j_mix" min="0" step="100"></div>
+      <div><label>마스터링 (¥)</label><input type="number" id="j_master" min="0" step="100"></div>
+      <div><label>믹싱 + 마스터링 (¥)</label><input type="number" id="j_mixmaster" min="0" step="100"></div>
+    </div>
     <h3 style="margin:18px 0 6px;font-size:.95rem">영어 화면 가격 (달러)</h3>
     <p class="hint">영어(EN)로 보는 방문자에게는 아래 달러 가격이 표시돼요. 비워두면 300 · 80 · 350달러로 나와요.</p>
     <div class="price">
@@ -221,6 +228,8 @@ textarea{white-space:pre-wrap;line-height:1.55}
     C.rateTexts = C.rateTexts || {};   // stays unset (site uses its built-in lines) until you edit one
     Object.keys(RT_DEF).forEach(k => tri($("#rt_" + k), C.rateTexts[k] || RT_DEF[k], false, o => { C.rateTexts[k] = o; }));
     tri($("#rt_note"), C.ratesNote || NOTE_DEF, true, o => { C.ratesNote = o; });
+    C.ratesJPY = C.ratesJPY || {};
+    ["mix", "master", "mixmaster"].forEach(k => { const i = $("#j_" + k); i.value = C.ratesJPY[k] || ""; i.oninput = () => { C.ratesJPY[k] = Math.max(0, Math.round(+i.value || 0)); touch(); }; });
     C.ratesUSD = C.ratesUSD || {};
     ["mix", "master", "mixmaster"].forEach(k => { const i = $("#u_" + k); i.value = C.ratesUSD[k] || ""; i.oninput = () => { C.ratesUSD[k] = Math.max(0, Math.round(+i.value || 0)); touch(); }; });
     ["mix", "master", "mixmaster"].forEach(k => { const i = $("#r_" + k); i.value = C.rates[k] || ""; i.oninput = () => { C.rates[k] = Math.max(0, Math.round(+i.value || 0)); touch(); }; });
