@@ -5422,6 +5422,8 @@ async function loadContent(){
         mix.alt = { ko: mix.alt.ko.replace(/[\d.]+만원/, man + "만원"), ja: mix.alt.ja.replace(/[\d.]+万ウォン/, man + "万ウォン"), en: mix.alt.en };
       }
     }
+    if (e && c.rateTexts && typeof c.rateTexts === "object") (e.rates || []).forEach(rt => { const v = L3(c.rateTexts[rt.k]); if (v) rt.inc = v; });   // price-table item lines (admin)
+    if (c.ratesNote){ const v = L3(c.ratesNote); if (v) ["ko", "ja", "en"].forEach(l => { I18N[l].ratesNote = v[l]; }); }   // text under the price table (admin)
     if (e && Array.isArray(c.discography)){
       const list = c.discography.filter(d => d && d.title).map(d => ({ year: +d.year || "", artist: String(d.artist || ""), title: String(d.title), role: String(d.role || ""), cover: d.cover ? String(d.cover) : undefined, feat: d.feat === true }));
       if (list.length) e.discography = list;
