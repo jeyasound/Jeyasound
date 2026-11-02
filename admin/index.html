@@ -118,6 +118,15 @@ textarea{white-space:pre-wrap;line-height:1.55}
       <div><label>마스터링</label><input type="number" id="r_master" min="0" step="1000"></div>
       <div><label>믹싱 + 마스터링</label><input type="number" id="r_mixmaster" min="0" step="1000"></div>
     </div>
+    <h3 style="margin:18px 0 6px;font-size:.95rem">항목 설명 문구</h3>
+    <p class="hint">가격표에서 각 항목 아래에 나오는 한 줄 설명이에요. 한국어를 고치면 일본어·영어도 같이 확인해 주세요.</p>
+    <label>레코딩</label><div class="tri" id="rt_rec"></div>
+    <label>믹싱</label><div class="tri" id="rt_mix"></div>
+    <label>마스터링</label><div class="tri" id="rt_master"></div>
+    <label>믹싱 + 마스터링</label><div class="tri" id="rt_mixmaster"></div>
+    <h3 style="margin:18px 0 6px;font-size:.95rem">하단 안내 문구</h3>
+    <p class="hint">가격표 맨 아래에 나오는 안내예요. 줄을 바꾸면 사이트에서도 그 자리에서 줄이 바뀌어요.</p>
+    <div class="tri" id="rt_note" data-area="1"></div>
     <h3 style="margin:18px 0 6px;font-size:.95rem">영어 화면 가격 (달러)</h3>
     <p class="hint">영어(EN)로 보는 방문자에게는 아래 달러 가격이 표시돼요. 비워두면 300 · 80 · 350달러로 나와요.</p>
     <div class="price">
@@ -203,6 +212,15 @@ textarea{white-space:pre-wrap;line-height:1.55}
     tri($("#e_session"), e.session, false, o => e.session = o);
     renderPhoto();
     renderGear();
+    const RT_DEF = {
+      rec: { ko: "일정 · 편성을 듣고 협의 후 결정", ja: "日程・編成を伺ってからご相談で決定", en: "Quoted once we talk through the session" },
+      mix: { ko: "트랙 수 제한 없음 · 수정 횟수 제한 없음", ja: "トラック数無制限・修正回数無制限", en: "Unlimited tracks · unlimited revisions" },
+      master: { ko: "스트리밍 기준 라우드니스 · 앨범 톤 통일", ja: "ストリーミング基準ラウドネス・アルバムのトーン統一", en: "Streaming-ready loudness · album consistency" },
+      mixmaster: { ko: "믹싱 + 마스터링 한 번에 · 3만원 절약", ja: "ミックス+マスタリングをまとめて・3万ウォンお得", en: "Mix and master together · save $30" } };
+    const NOTE_DEF = { ko: "믹싱 비용은 로열티(저작인접권) 배분으로 대체할 수 있어요.\n자세한 조건은 문의 주세요.", ja: "ミキシング費用はロイヤリティ(著作隣接権)の分配で代替できます。\n詳しくはお問い合わせください。", en: "The mixing fee can be swapped for a royalty share (neighbouring rights).\nAsk us for the details." };
+    C.rateTexts = C.rateTexts || {};   // stays unset (site uses its built-in lines) until you edit one
+    Object.keys(RT_DEF).forEach(k => tri($("#rt_" + k), C.rateTexts[k] || RT_DEF[k], false, o => { C.rateTexts[k] = o; }));
+    tri($("#rt_note"), C.ratesNote || NOTE_DEF, true, o => { C.ratesNote = o; });
     C.ratesUSD = C.ratesUSD || {};
     ["mix", "master", "mixmaster"].forEach(k => { const i = $("#u_" + k); i.value = C.ratesUSD[k] || ""; i.oninput = () => { C.ratesUSD[k] = Math.max(0, Math.round(+i.value || 0)); touch(); }; });
     ["mix", "master", "mixmaster"].forEach(k => { const i = $("#r_" + k); i.value = C.rates[k] || ""; i.oninput = () => { C.rates[k] = Math.max(0, Math.round(+i.value || 0)); touch(); }; });
