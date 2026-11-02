@@ -155,5 +155,11 @@
     "mix": 250,
     "master": 70,
     "mixmaster": 300
+  },
+  "rateTexts": {},
+  "ratesJPY": {
+    "mix": 30000,
+    "master": 8000,
+    "mixmaster": 35000
   }
 }
