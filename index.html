@@ -2131,7 +2131,7 @@ function selectTab(k){
   $("#panel").querySelectorAll(".tab").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === k));
   renderTab(e); $("#pbody").scrollTop = 0;
 }
-const fmtQ = q => (state.lang === "en" && q.usd) ? "$" + q.usd.toLocaleString("en-US") : fmt(q.price);   // English shows its own USD price
+const fmtQ = q => (state.lang === "en" && q.usd) ? "$" + q.usd.toLocaleString("en-US") : (state.lang === "ja" && q.jpy) ? "¥" + q.jpy.toLocaleString("ja-JP") : fmt(q.price);   // English shows its own USD price
 const fmt = n => new Intl.NumberFormat(state.lang === "en" ? "en-US" : state.lang, { style:"currency", currency:CONFIG.currency, maximumFractionDigits:0 }).format(n);
 const hue = i => ["#8a5a2b","#2f4560","#7a3a2c","#5f6b45","#4a3b6a","#6a4a1f"][i % 6];
 const PLAY = `<svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M3 1.5v11l9-5.5z"/></svg>`;
@@ -2944,6 +2944,14 @@ function usdSync(e, U){
   if (mm && mm.inc && g("mix") && g("master") && g("mixmaster")){ const s = g("mix") + g("master") - g("mixmaster"); mm.inc.en = "Mix and master together" + (s > 0 ? " · save $" + s : ""); }
 }
 ENGINEERS.forEach(e => usdSync(e));
+// Japanese prices are optional (admin → 가격 → 일본어 화면 가격). Until one is set, the Japanese page keeps showing won.
+function jpySync(e, J){
+  if (!e || !e.rates || !J) return;
+  e.rates.forEach(rt => { const v = +J[rt.k]; if (v > 0) rt.jpy = Math.round(v); });
+  const g = k => (e.rates.find(r => r.k === k) || {}).jpy, mix = e.rates.find(r => r.k === "mix"), mm = e.rates.find(r => r.k === "mixmaster"), yen = n => "¥" + n.toLocaleString("ja-JP");
+  if (mix && mix.alt && g("mix")) mix.alt.ja = "一括払い" + yen(g("mix")) + "、またはロイヤリティ(著作隣接権)で代替可能";
+  if (mm && mm.inc && g("mix") && g("master") && g("mixmaster")){ const s = g("mix") + g("master") - g("mixmaster"); mm.inc.ja = "ミックス+マスタリングをまとめて" + (s > 0 ? "・" + yen(s) + "お得" : ""); }
+}
 function wrapText(g, text, x, y, maxW, lh){
   const parts = String(text).split("\n"); if (parts.length > 1){ parts.forEach((p, i) => { y = wrapText(g, p, x, y, maxW, lh) + (i < parts.length - 1 ? lh : 0); }); return y; }
   const words = String(text).split(/(\s+)/); let line = "";
@@ -5414,6 +5422,7 @@ async function loadContent(){
       if (Array.isArray(g.gear)) e.gear = g.gear.filter(x => Array.isArray(x) && x[0]).map(x => [String(x[0]), String(x[1] || "")]);
     }
     if (e) usdSync(e, c.ratesUSD);
+    if (e) jpySync(e, c.ratesJPY);
     if (e && c.rates && typeof c.rates === "object"){
       (e.rates || []).forEach(rt => { const v = c.rates[rt.k]; if (typeof v === "number" && v > 0) rt.price = Math.round(v); });
       const mix = (e.rates || []).find(rt => rt.k === "mix");
