@@ -38,25 +38,16 @@ nav.main a{text-decoration:none;color:var(--dim)}nav.main a:hover{color:var(--in
 .langs{display:flex;border:1px solid var(--faint);border-radius:999px;padding:3px}
 .langs button{background:none;border:0;color:var(--dim);font-size:12px;font-weight:600;padding:6px 10px;border-radius:999px;cursor:pointer;min-height:32px}
 .langs button[aria-pressed=true]{background:var(--grad);color:#0b0c1e}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:50px;padding:0 22px 0 7px;border-radius:999px;font-weight:700;font-size:15px;text-decoration:none;cursor:pointer;border:1.5px solid rgba(200,210,255,.42);background:var(--bg);color:var(--ink);white-space:nowrap;font-family:var(--sans);transition:box-shadow .45s,border-color .45s}
-.btn.pri{background:linear-gradient(90deg,rgba(166,214,255,.16),rgba(201,176,255,.2)),var(--bg);border-color:rgba(214,200,255,.65)}
-.btn:hover{border-color:#d9ccff;box-shadow:0 0 18px rgba(170,160,255,.24)}
-.btn.lit{border-color:#e4dbff;box-shadow:0 0 0 1px rgba(201,176,255,.5),0 0 30px 3px rgba(170,160,255,.4),inset 0 0 16px rgba(170,160,255,.18)}
-.sock{position:relative;width:36px;height:36px;flex:none}
-.sock svg{display:block;width:100%;height:100%;overflow:visible}
-.sock circle,.sock path,.bigplay circle,.bigplay path.o{fill:none;stroke:url(#skg);stroke-width:1.4}
-.hole{fill:#05060f!important;stroke-width:1.1!important;transition:fill .35s,filter .35s}
-.btn:hover .hole,.bigplay:hover .hole{fill:rgba(201,176,255,.38)!important}
-.lit .hole{fill:#f3eeff!important;filter:drop-shadow(0 0 4px #c9b0ff)}
-.sock .plug{position:absolute;right:calc(100% - 4px);top:50%;width:52px;height:20px;transform:translate(-30px,-50%);opacity:0;pointer-events:none;transition:transform .4s cubic-bezier(.3,1.4,.5,1),opacity .2s}
-.sock .plug svg path,.sock .plug svg rect{fill:var(--bg);stroke:#bfe0ff;stroke-width:1.3}
-html:not(.xlr) .lit .sock .plug{opacity:1;transform:translate(2px,-50%)}
-.btn.sm{min-height:40px;padding:0 14px 0 5px;font-size:13px;gap:7px}
-.btn.sm .sock{width:28px;height:28px}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:50px;padding:0 26px;border-radius:999px;font-weight:700;font-size:15px;text-decoration:none;cursor:pointer;border:1.5px solid rgba(200,210,255,.42);background:transparent;color:var(--ink);white-space:nowrap;font-family:var(--sans);transition:box-shadow .4s,border-color .4s,filter .4s}
+.btn.pri{background:var(--grad);color:#0b0c1e;border-color:transparent}
+.btn:hover{border-color:#d9ccff;box-shadow:0 0 20px rgba(170,160,255,.3)}
+.btn.pri:hover{filter:brightness(1.05)}
+.btn.lit{box-shadow:0 0 0 1px rgba(201,176,255,.5),0 0 30px 4px rgba(170,160,255,.45)}
+.btn.sm{min-height:40px;padding:0 18px;font-size:13px}
 #bar{position:fixed;inset:0 0 auto 0;height:2px;background:var(--grad);transform-origin:0 0;transform:scaleX(0);z-index:50}
 
 /* intro */
-#intro{position:relative;height:880svh}
+#intro{position:relative;height:700svh}
 .stage{position:sticky;top:0;height:100svh;overflow:hidden}
 #cv{position:absolute;inset:0;width:100%;height:100%;display:block}
 .shade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(10,11,28,.85) 0%,rgba(10,11,28,.35) 32%,transparent 55%);pointer-events:none}
@@ -89,11 +80,10 @@ section.blk{scroll-margin-top:56px;padding:clamp(72px,10vw,128px) var(--pad);bor
 /* before & after: waveform player */
 .ba{padding:clamp(16px,2.4vw,28px)}
 .baTop{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-.bigplay{width:60px;height:60px;border-radius:50%;border:0;background:none;padding:0;cursor:pointer;flex:none;position:relative;transition:filter .45s}
-.bigplay:hover{filter:drop-shadow(0 0 8px rgba(185,170,255,.45))}
-.bigplay.lit{filter:drop-shadow(0 0 12px rgba(185,170,255,.75))}
-.bigplay .g{fill:#eceaff}
-.bigplay svg{display:block;width:100%;height:100%;overflow:visible}
+.bigplay{width:58px;height:58px;border-radius:50%;border:0;background:var(--grad);cursor:pointer;display:grid;place-items:center;flex:none;transition:box-shadow .4s}
+.bigplay:hover{box-shadow:0 0 20px rgba(170,160,255,.4)}
+.bigplay.lit{box-shadow:0 0 0 6px rgba(190,180,255,.12),0 0 26px rgba(170,160,255,.5)}
+.bigplay svg{width:20px;height:20px}
 .baInfo{flex:1;min-width:140px}
 .baT{font-family:var(--serif);font-size:calc(clamp(20px,2.2vw,26px)*var(--hs))}
 .baTime{font-size:13px;color:var(--dim);font-variant-numeric:tabular-nums}
@@ -131,10 +121,10 @@ html.mo .ico path,html.mo .lp .d{stroke-dasharray:1 1;stroke-dashoffset:1}
 .fld .ul{display:block;height:1.5px;margin-top:-7px;border-radius:2px;background:var(--grad);transform-origin:0 50%;transform:scaleX(var(--u,1));opacity:.9}
 html.mo .fld input{border-color:rgba(200,210,255,.16)}
 #engName{clip-path:inset(-10% calc((1 - var(--n,1))*100%) -10% 0)}
-/* XLR cursor (mouse only) */
-html.xlr,html.xlr *{cursor:none!important}
-html.xlr input,html.xlr textarea{cursor:text!important}
-#xlr{position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none;z-index:9999}
+/* cursor (mouse only) */
+html.cur,html.cur *{cursor:none!important}
+html.cur input,html.cur textarea{cursor:text!important}
+#cur{position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none;z-index:9999}
 
 /* process */
 .steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;list-style:none;padding:0}
@@ -481,8 +471,19 @@ function size() {
 const cl = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v)), seg = (p, a, b) => cl((p - a) / (b - a)), ease = t => 1 - Math.pow(1 - t, 3);
 const prog = () => reduce ? 1 : cl(-intro.getBoundingClientRect().top / Math.max(1, intro.offsetHeight - maxH));
 function frameAt(i) { for (let d = 0; d < N; d++) { if (imgs[i - d]) return imgs[i - d]; if (imgs[i + d]) return imgs[i + d]; } return null; }
+// once drawn, the studio stays drawn: scrolling back up never rewinds it, and after the intro has been
+// passed it shrinks to one screen so coming back up lands straight on the finished opening screen
+let pMax = 0, collapsed = false;
+function collapseIntro() {
+  if (collapsed || reduce || intro.getBoundingClientRect().bottom > 0) return;
+  const ref = $("flow"), before = ref.getBoundingClientRect().top;
+  intro.style.height = "100svh"; collapsed = true;
+  const shift = ref.getBoundingClientRect().top - before;   // works whether or not the browser anchors the scroll itself
+  if (shift) scrollTo({ top: scrollY + shift, behavior: "instant" });
+}
 function draw(force) {
-  const p = prog(), FEND = .8, i = Math.round(cl(p / FEND) * (N - 1));
+  collapseIntro();
+  const p = collapsed ? 1 : (pMax = Math.max(pMax, prog())), FEND = .8, i = Math.round(cl(p / FEND) * (N - 1));
   if (i !== cur || force) {
     const im = frameAt(i);
     if (im) { const W = cv.width, H = cv.height, s = set === "m" ? W / im.width : Math.max(W / im.width, H / im.height), w = im.width * s, h = im.height * s;
@@ -500,8 +501,7 @@ addEventListener("resize", () => { if (innerHeight > maxH || Math.abs(innerHeigh
 /* ---------- Before & After: both versions play in sync, the switch only moves the gain ---------- */
 const PEAKS = [[[0.153,0.275,0.366,0.8,0.422,0.504,0.865,0.673,0.71,0.409,0.47,0.42,0.887,0.752,0.473,0.407,0.853,0.749,0.446,0.541,0.334,0.215,0.915,0.428,0.643,0.662,0.592,0.694,0.318,0.397,0.527,0.866,0.637,0.178,0.493,0.92,0.641,0.26,0.488,0.76,0.332,0.886,0.387,0.26,0.422,0.735,0.468,0.463,0.267,0.299,0.451,0.815,0.346,0.321,0.732,0.544,0.356,0.376,0.347,0.479,0.753,0.459,0.267,0.366,0.821,0.469,0.182,0.355,0.605,0.296,0.895,0.277,0.294,0.662,0.623,0.329,0.289,0.831,0.436,0.673,0.67,0.21,0.275,0.866,0.437,0.429,0.545,0.367,0.33,0.911,0.415,0.239,0.565,0.839,0.505,0.444,0.292,0.359,0.526,0.938,0.35,0.306,0.779,0.521,0.241,0.312,0.256,0.399,0.84,0.497,0.242,0.556,0.865,0.479,0.21,0.713,0.663,0.189,0.937,0.244,0.331,0.67,0.775,0.376,0.392,0.194,0.513,0.844,0.683,0.371,0.287,0.911,0.504,0.414,0.398,0.506,0.411,0.922,0.387,0.405,0.498,0.785,0.448,0.348,0.264,0.378,0.489,0.808,0.431,0.389,0.803,0.559,0.202,0.463,0.886,0.367,0.843,0.914,0.418,0.275,0.943,0.655,0.495,0.379,0.371,0.304,0.985,0.463,0.441,0.708,0.677,0.457,0.466,0.349,0.448,0.702,0.661,0.266,0.636,0.95,0.524,0.449,0.46,0.292,0.472,0.929,0.374,0.285,0.461,0.828,0.486,0.328,0.857,0.57,0.587,0.891,0.359,0.43,0.774,0.538,0.397,0.42,0.33,0.457,0.875,0.543,0.229,0.529,0.878,0.643,0.356,0.398,0.489,0.258,0.961,0.368,0.531,0.689,0.669,0.609,0.473,0.228,0.407,0.724,0.843,0.501,0.363,0.906,0.467,0.393,0.511,0.817,0.423,0.569,0.208,0.126,0.175,0.221,0.105,0.032],[0.161,0.266,0.399,0.813,0.479,0.498,0.968,0.69,0.624,0.37,0.519,0.425,0.904,0.688,0.515,0.423,0.948,0.673,0.444,0.501,0.361,0.262,1.0,0.436,0.468,0.726,0.688,0.64,0.317,0.453,0.571,0.819,0.659,0.177,0.46,0.957,0.624,0.24,0.521,0.838,0.396,0.957,0.479,0.406,0.528,0.845,0.6,0.522,0.347,0.36,0.53,0.868,0.451,0.457,0.788,0.625,0.362,0.407,0.473,0.529,0.856,0.49,0.355,0.441,0.879,0.607,0.342,0.433,0.672,0.362,0.952,0.344,0.43,0.722,0.669,0.46,0.322,0.92,0.575,0.74,0.746,0.259,0.379,0.972,0.482,0.558,0.557,0.416,0.385,0.92,0.49,0.274,0.562,0.904,0.516,0.476,0.423,0.389,0.613,0.97,0.433,0.436,0.815,0.593,0.392,0.328,0.384,0.447,0.834,0.57,0.311,0.596,0.912,0.546,0.316,0.736,0.738,0.31,0.951,0.272,0.348,0.703,0.802,0.401,0.406,0.238,0.546,0.797,0.679,0.46,0.374,0.945,0.536,0.463,0.399,0.51,0.486,0.938,0.446,0.458,0.545,0.832,0.537,0.393,0.381,0.441,0.527,0.785,0.522,0.509,0.823,0.64,0.344,0.563,0.935,0.473,0.859,0.724,0.462,0.379,0.994,0.678,0.47,0.429,0.454,0.419,0.958,0.582,0.562,0.72,0.745,0.424,0.51,0.418,0.532,0.735,0.676,0.343,0.592,0.984,0.604,0.531,0.543,0.412,0.517,0.906,0.451,0.372,0.515,0.898,0.572,0.335,0.889,0.641,0.627,0.853,0.452,0.467,0.784,0.562,0.405,0.436,0.413,0.523,0.833,0.505,0.293,0.528,0.904,0.621,0.426,0.411,0.526,0.332,0.943,0.461,0.597,0.706,0.747,0.573,0.484,0.318,0.45,0.727,0.832,0.473,0.433,0.919,0.54,0.469,0.486,0.8,0.444,0.552,0.223,0.169,0.195,0.216,0.093,0.028]],[[0.055,0.135,0.264,0.446,0.47,0.51,0.418,0.56,0.321,0.571,0.349,0.509,0.231,0.479,0.567,0.504,0.6,0.627,0.561,0.527,0.6,0.488,0.596,0.414,0.395,0.245,0.565,0.524,0.549,0.284,0.405,0.051,0.404,0.289,0.551,0.406,0.165,0.392,0.601,0.465,0.339,0.478,0.512,0.522,0.371,0.507,0.503,0.729,0.479,0.682,0.801,0.743,0.386,0.557,0.415,0.373,0.498,0.4,0.612,0.285,0.401,0.146,0.487,0.311,0.535,0.436,0.424,0.453,0.6,0.487,0.532,0.603,0.466,0.592,0.516,0.511,0.408,0.542,0.427,0.585,0.445,0.547,0.275,0.153,0.282,0.156,0.5,0.476,0.528,0.335,0.427,0.238,0.341,0.196,0.445,0.307,0.367,0.225,0.484,0.231,0.452,0.288,0.509,0.248,0.393,0.598,0.485,0.571,0.627,0.577,0.487,0.592,0.35,0.526,0.431,0.47,0.546,0.515,0.436,0.332,0.5,0.463,0.325,0.297,0.449,0.34,0.384,0.349,0.533,0.237,0.38,0.285,0.502,0.445,0.537,0.433,0.759,0.642,0.682,0.522,0.544,0.59,0.542,0.557,0.473,0.7,0.728,0.671,0.46,0.567,0.568,0.395,0.586,0.76,0.703,0.473,0.491,0.369,0.482,0.43,0.479,0.41,0.321,0.276,0.473,0.565,0.572,0.524,0.612,0.621,0.91,0.708,0.673,0.873,0.677,0.801,0.576,0.59,0.788,0.636,0.601,0.614,0.448,0.55,0.477,0.583,0.384,0.544,0.477,0.626,0.484,0.388,0.595,0.464,0.463,0.446,0.548,0.339,0.419,0.369,0.525,0.305,0.566,0.462,0.562,0.47,0.499,0.455,0.618,0.592,0.524,0.51,0.379,0.465,0.387,0.627,0.481,0.512,0.424,0.564,0.284,0.451,0.445,0.575,0.591,0.522,0.508,0.401,0.532,0.361,0.503,0.258,0.322,0.346,0.288,0.191,0.216,0.091,0.112,0.032],[0.074,0.252,0.294,0.569,0.501,0.637,0.512,0.695,0.452,0.742,0.531,0.703,0.354,0.636,0.689,0.674,0.73,0.822,0.758,0.543,0.753,0.551,0.711,0.331,0.55,0.206,0.697,0.608,0.724,0.399,0.601,0.085,0.66,0.456,0.718,0.67,0.28,0.508,0.353,0.556,0.41,0.692,0.693,0.775,0.539,0.8,0.687,0.866,0.775,0.82,0.859,0.587,0.534,0.392,0.558,0.336,0.582,0.408,0.83,0.426,0.558,0.201,0.698,0.454,0.701,0.591,0.723,0.645,0.623,0.659,0.594,0.8,0.573,0.754,0.719,0.609,0.57,0.689,0.472,0.685,0.611,0.661,0.252,0.155,0.245,0.128,0.61,0.645,0.793,0.421,0.594,0.415,0.553,0.391,0.568,0.395,0.572,0.319,0.632,0.383,0.653,0.409,0.684,0.351,0.579,0.77,0.543,0.782,0.666,0.737,0.65,0.793,0.387,0.663,0.46,0.661,0.552,0.617,0.432,0.556,0.617,0.592,0.579,0.408,0.654,0.546,0.637,0.465,0.683,0.372,0.589,0.424,0.712,0.533,0.724,0.556,0.917,0.709,0.921,0.636,0.722,0.745,0.478,0.688,0.651,0.772,0.779,0.623,0.495,0.682,0.732,0.428,0.755,0.96,0.827,0.634,0.662,0.436,0.687,0.666,0.623,0.538,0.355,0.349,0.655,0.713,0.682,0.686,0.678,0.661,0.722,0.636,0.748,0.981,0.855,1.0,0.723,0.645,0.829,0.803,0.561,0.718,0.417,0.697,0.521,0.763,0.416,0.709,0.59,0.694,0.612,0.471,0.686,0.533,0.674,0.474,0.708,0.483,0.655,0.582,0.688,0.338,0.731,0.641,0.711,0.663,0.712,0.544,0.76,0.723,0.523,0.701,0.499,0.638,0.505,0.725,0.484,0.665,0.429,0.71,0.385,0.605,0.58,0.695,0.715,0.553,0.673,0.479,0.745,0.484,0.663,0.308,0.473,0.453,0.397,0.285,0.282,0.114,0.134,0.043]],[[0.088,0.256,0.461,0.654,0.813,0.802,0.729,0.642,0.663,0.62,0.614,0.681,0.668,0.695,0.718,0.646,0.704,0.748,0.799,0.658,0.655,0.796,0.679,0.719,0.729,0.595,0.727,0.717,0.708,0.679,0.769,0.619,0.588,0.707,0.72,0.623,0.606,0.483,0.743,0.79,0.692,0.728,0.664,0.631,0.642,0.675,0.626,0.726,0.752,0.768,0.885,0.793,0.876,0.853,0.738,0.681,0.652,0.754,0.808,0.746,0.721,0.678,0.826,0.821,0.766,0.812,0.704,0.658,0.68,0.731,0.734,0.83,0.686,0.673,0.719,0.646,0.724,0.748,0.697,0.613,0.647,0.694,0.644,0.715,0.639,0.583,0.777,0.749,0.687,0.711,0.69,0.612,0.472,0.708,0.76,0.784,0.76,0.782,0.72,0.599,0.708,0.623,0.624,0.631,0.628,0.655,0.665,0.624,0.661,0.615,0.646,0.621,0.663,0.607,0.62,0.626,0.66,0.543,0.605,0.576,0.699,0.68,0.664,0.723,0.69,0.654,0.61,0.6,0.642,0.6,0.657,0.362,0.679,0.681,0.66,0.658,0.553,0.633,0.619,0.612,0.684,0.632,0.63,0.598,0.667,0.728,0.658,0.712,0.677,0.625,0.637,0.581,0.619,0.611,0.599,0.363,0.649,0.569,0.747,0.624,0.603,0.61,0.593,0.579,0.574,0.548,0.586,0.611,0.73,0.781,0.705,0.681,0.584,0.668,0.613,0.466,0.568,0.615,0.653,0.412,0.599,0.561,0.694,0.645,0.681,0.666,0.551,0.556,0.666,0.56,0.606,0.623,0.734,0.694,0.727,0.731,0.643,0.72,0.563,0.703,0.631,0.531,0.411,0.758,0.49,0.101,0.445,0.614,0.574,0.539,0.699,0.628,0.687,0.535,0.499,0.691,0.618,0.601,0.763,0.639,0.743,0.645,0.814,0.722,0.686,0.586,0.598,0.682,0.469,0.472,0.682,0.27,0.14,0.435,0.391,0.239,0.231,0.122,0.083,0.042],[0.118,0.341,0.47,0.587,0.78,0.833,0.809,0.652,0.7,0.63,0.661,0.696,0.655,0.84,0.804,0.653,0.802,0.72,0.87,0.718,0.688,0.834,0.817,0.752,0.785,0.677,0.894,0.755,0.777,0.815,0.872,0.698,0.636,0.849,0.783,0.767,0.787,0.64,0.861,0.759,0.836,0.822,0.835,0.668,0.666,0.748,0.795,0.744,0.837,0.861,0.91,0.667,0.865,0.91,0.814,0.678,0.615,0.79,0.808,0.762,0.825,0.786,0.873,0.753,0.8,0.91,0.879,0.738,0.712,0.856,0.79,0.836,0.83,0.717,0.862,0.681,0.819,0.908,0.853,0.713,0.708,0.834,0.8,0.891,0.752,0.733,0.838,0.772,0.79,0.847,0.79,0.674,0.527,0.784,0.812,0.832,0.86,1.0,0.76,0.637,0.75,0.759,0.767,0.749,0.731,0.853,0.788,0.733,0.736,0.707,0.73,0.722,0.743,0.697,0.687,0.701,0.78,0.71,0.747,0.724,0.871,0.812,0.735,0.738,0.726,0.741,0.662,0.736,0.786,0.72,0.792,0.413,0.832,0.754,0.733,0.756,0.687,0.759,0.68,0.759,0.755,0.704,0.699,0.672,0.799,0.847,0.79,0.728,0.784,0.697,0.781,0.699,0.725,0.737,0.712,0.424,0.805,0.635,0.861,0.682,0.751,0.726,0.672,0.761,0.716,0.624,0.759,0.777,0.847,0.866,0.73,0.776,0.685,0.803,0.722,0.63,0.708,0.651,0.775,0.474,0.794,0.634,0.818,0.644,0.805,0.775,0.654,0.711,0.769,0.673,0.707,0.769,0.856,0.815,0.867,0.733,0.731,0.867,0.678,0.719,0.679,0.635,0.54,0.873,0.503,0.116,0.613,0.8,0.693,0.591,0.834,0.781,0.782,0.523,0.624,0.777,0.691,0.647,0.86,0.609,0.77,0.713,0.918,0.73,0.702,0.627,0.729,0.877,0.63,0.676,0.804,0.294,0.165,0.564,0.441,0.284,0.266,0.125,0.1,0.05]],[[0.079,0.217,0.543,0.409,0.34,0.339,0.756,0.511,0.162,0.742,0.498,0.75,0.649,0.395,0.863,0.545,0.451,0.351,0.766,0.547,0.484,0.767,0.426,0.4,0.43,0.479,0.719,0.422,0.282,0.248,0.66,0.434,0.138,0.679,0.491,0.483,0.369,0.294,0.567,0.516,0.483,0.348,0.761,0.559,0.515,0.76,0.428,0.274,0.372,0.482,0.743,0.429,0.286,0.255,0.666,0.453,0.138,0.678,0.488,0.705,0.637,0.389,0.829,0.518,0.463,0.353,0.773,0.571,0.494,0.77,0.44,0.399,0.435,0.489,0.719,0.416,0.293,0.273,0.653,0.434,0.14,0.657,0.439,0.228,0.171,0.288,0.921,0.649,0.666,0.55,0.772,0.611,0.532,0.744,0.423,0.238,0.519,0.621,0.79,0.525,0.404,0.384,0.626,0.475,0.238,0.627,0.45,0.832,0.743,0.392,0.75,0.569,0.449,0.311,0.711,0.538,0.46,0.698,0.39,0.343,0.492,0.622,0.702,0.514,0.373,0.312,0.612,0.398,0.188,0.571,0.401,0.651,0.452,0.323,0.633,0.617,0.564,0.507,0.727,0.563,0.483,0.681,0.387,0.232,0.482,0.58,0.758,0.489,0.373,0.343,0.575,0.427,0.222,0.588,0.423,0.786,0.69,0.359,0.696,0.537,0.432,0.285,0.664,0.5,0.44,0.663,0.375,0.328,0.459,0.584,0.683,0.484,0.353,0.299,0.581,0.384,0.18,0.54,0.401,0.598,0.39,0.331,0.655,0.46,0.393,0.321,0.634,0.42,0.369,0.632,0.335,0.271,0.322,0.371,0.585,0.347,0.24,0.272,0.566,0.356,0.172,0.579,0.344,0.467,0.487,0.338,0.674,0.441,0.402,0.279,0.654,0.469,0.414,0.666,0.389,0.363,0.362,0.391,0.599,0.37,0.251,0.261,0.563,0.345,0.15,0.578,0.367,0.423,0.332,0.343,0.664,0.36,0.289,0.189,0.337,0.202,0.142,0.156,0.052,0.02],[0.078,0.217,0.617,0.484,0.478,0.448,0.829,0.536,0.369,0.841,0.541,0.879,0.54,0.35,0.884,0.527,0.431,0.471,0.84,0.442,0.461,0.862,0.443,0.492,0.521,0.587,0.941,0.537,0.406,0.361,0.83,0.53,0.33,0.835,0.605,0.565,0.481,0.381,0.421,0.503,0.566,0.456,0.835,0.565,0.592,0.855,0.505,0.445,0.477,0.663,1.0,0.588,0.515,0.426,0.833,0.636,0.428,0.866,0.621,0.84,0.594,0.499,0.91,0.407,0.402,0.457,0.842,0.511,0.513,0.884,0.494,0.514,0.515,0.616,0.957,0.529,0.534,0.408,0.849,0.555,0.318,0.805,0.536,0.417,0.358,0.445,0.879,0.421,0.562,0.554,0.839,0.529,0.568,0.863,0.474,0.461,0.474,0.61,0.978,0.572,0.471,0.39,0.807,0.637,0.381,0.849,0.55,0.858,0.659,0.442,0.855,0.508,0.388,0.261,0.814,0.393,0.378,0.836,0.375,0.463,0.549,0.632,0.965,0.59,0.362,0.264,0.797,0.453,0.138,0.798,0.476,0.539,0.565,0.518,0.599,0.412,0.522,0.551,0.837,0.536,0.564,0.859,0.479,0.467,0.474,0.613,0.983,0.577,0.476,0.38,0.812,0.627,0.381,0.848,0.557,0.865,0.66,0.436,0.854,0.502,0.396,0.265,0.814,0.381,0.383,0.838,0.374,0.462,0.536,0.622,0.955,0.571,0.362,0.27,0.793,0.463,0.137,0.797,0.48,0.529,0.445,0.478,0.806,0.55,0.479,0.442,0.875,0.421,0.361,0.859,0.466,0.458,0.524,0.536,0.902,0.595,0.478,0.465,0.852,0.522,0.427,0.873,0.581,0.606,0.536,0.388,0.804,0.524,0.488,0.465,0.876,0.418,0.369,0.864,0.501,0.492,0.541,0.544,0.9,0.623,0.491,0.457,0.85,0.526,0.337,0.863,0.599,0.633,0.538,0.541,0.877,0.419,0.369,0.292,0.445,0.214,0.175,0.208,0.067,0.033]]];   // RMS of each version, 240 slices, one shared scale per track
 let AC = null, an = null, selT = 0, curT = -1, mode = "after", pair = null;
-const BIGSOCK = g => `<svg viewBox="0 0 60 60" aria-hidden="true"><circle cx="30" cy="30" r="28"/><circle cx="30" cy="30" r="21" opacity=".45"/><path class="o" d="M26 2.4h8v5h-8z"/><circle class="hole" cx="21" cy="23" r="3.4"/><circle class="hole" cx="39" cy="23" r="3.4"/><circle class="hole" cx="30" cy="42" r="3.4"/>${g}</svg>`;
-const ICON_PLAY = BIGSOCK('<path class="g" d="M27.5 27.5l7 3.6-7 3.6z"/>'), ICON_PAUSE = BIGSOCK('<path class="g" d="M26.6 27.6h2.4v7h-2.4zM31 27.6h2.4v7H31z"/>');
+const ICON_PLAY = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2l10 6-10 6z" fill="#0b0c1e"/></svg>', ICON_PAUSE = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2h3v12H4zM9 2h3v12H9z" fill="#0b0c1e"/></svg>';
 const playing = () => !!(pair && !pair.a.paused);
 function renderTracks() {
   const t = TX[lang], k = E.tracks[selT];
@@ -671,95 +671,73 @@ if (MO) {
   new ResizeObserver(() => buildSpine()).observe($("flow"));
 } else { $("spine").style.display = "none"; }
 
-/* ---------- XLR cursor: the plug is the pointer, its cable follows (mouse only) ---------- */
-const XLR = MO && matchMedia("(hover: hover) and (pointer: fine)").matches;
-let xlrTick = () => {};
-if (XLR) {
-  document.documentElement.classList.add("xlr");
-  const c = document.createElement("canvas"); c.id = "xlr"; c.setAttribute("aria-hidden", "true"); document.body.appendChild(c);
-  const g = c.getContext("2d"), NS = 34, SEG = 9, PLUG = 50;
-  let snap = null; window.__xlrSnap = (x, y) => { snap = { x, y, t: performance.now() }; };
-  let mx = -300, my = -300, seen = false, hot = 0, hotT = 0, show = 0, showT = 0, pts = [];
-  for (let k = 0; k < NS; k++) pts.push({ x: mx, y: my + k * SEG, px: mx, py: my + k * SEG });
+/* ---------- cursor: a glowing dot with five level bars standing just below it (mouse only) ---------- */
+const CUR = MO && matchMedia("(hover: hover) and (pointer: fine)").matches;
+let curTick = () => {};
+if (CUR) {
+  document.documentElement.classList.add("cur");
+  const c = document.createElement("canvas"); c.id = "cur"; c.setAttribute("aria-hidden", "true"); document.body.appendChild(c);
+  const g = c.getContext("2d"), N = 5, GAP = 7, DROP = 34, HMAX = 26;
+  const H0 = [.55, .85, 1, .8, .6];                 // resting shape: tallest in the middle
+  const K = [.16, .19, .22, .19, .16], DAMP = .74;   // springs: middle bar follows first, outer bars lag a little
+  let mx = -300, my = -300, seen = false, sp = 0, hot = 0, hotT = 0, show = 0, showT = 1, kick = 0, lx = 0, ly = 0, vxs = 0;
+  const bars = H0.map(() => ({ x: -300, y: -300, vx: 0, vy: 0, h: 3, vh: 0 }));
   addEventListener("pointermove", e => {
     if (e.pointerType && e.pointerType !== "mouse") return;
     mx = e.clientX; my = e.clientY;
-    if (!seen) { seen = true; pts.forEach((p, k) => { p.x = p.px = mx + k * 2; p.y = p.py = my + (k ? PLUG + k * SEG : 0); }); }
+    if (!seen) { seen = true; lx = mx; ly = my; bars.forEach((b, k) => { b.x = mx + (k - 2) * GAP; b.y = my + DROP; }); }
     const el = e.target instanceof Element ? e.target : null;
     hotT = el && el.closest("a,button,[role=tab],#wave,label") ? 1 : 0;
     showT = el && el.closest("input,textarea") ? 0 : 1;
   }, { passive: true });
+  addEventListener("pointerdown", e => { if (!e.pointerType || e.pointerType === "mouse") kick = 1; }, { passive: true });
   document.addEventListener("mouseleave", () => showT = 0);
   document.addEventListener("mouseenter", () => showT = 1);
-  const C1 = [166, 214, 255], C2 = [201, 176, 255], mix = (t, a = 1) => `rgba(${C1.map((v, k) => Math.round(v + (C2[k] - v) * t)).join(",")},${a})`;
-  xlrTick = () => {
+  const col = (t, a) => `rgba(${Math.round(166 + 35 * t)},${Math.round(214 - 38 * t)},255,${a})`;
+  curTick = () => {
     const dpr = Math.min(devicePixelRatio || 1, 2);
     if (c.width !== innerWidth * dpr || c.height !== innerHeight * dpr) { c.width = innerWidth * dpr; c.height = innerHeight * dpr; }
-    hot += (hotT - hot) * .25; show += ((seen ? showT : 0) - show) * .2;
+    const dx = mx - lx, dy = my - ly, v = Math.hypot(dx, dy); lx = mx; ly = my;
+    sp += (Math.min(1, v / 20) - sp) * (v / 20 > sp ? .3 : .06);
+    vxs += (dx - vxs) * .2;
+    hot += (hotT - hot) * .2; show += ((seen ? showT : 0) - show) * .2; kick *= .9;
     g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, innerWidth, innerHeight);
     if (show < .02) return;
-    // a pressed button pulls the plug into its socket for a moment
-    let tx = mx, ty = my, f = 0;
-    if (snap) { const k = performance.now() - snap.t; if (k > 700) snap = null; else { f = ease(cl(k / 170)) * (1 - ease(cl((k - 480) / 220))); tx = mx + (snap.x - mx) * f; ty = my + (snap.y - my) * f; hot = Math.max(hot, f); } }
-    // cable: verlet rope pinned to the back of the plug, with a little gravity
-    pts[0].x = tx; pts[0].y = ty;
-    for (let k = 1; k < NS; k++) { const p = pts[k], vx = (p.x - p.px) * .94, vy = (p.y - p.py) * .94; p.px = p.x; p.py = p.y; p.x += vx; p.y += vy + .35; }
-    for (let it = 0; it < 8; it++) for (let k = 1; k < NS; k++) {
-      const a = pts[k - 1], b = pts[k], len = k === 1 ? PLUG : SEG, dx = b.x - a.x, dy = b.y - a.y, dd = Math.hypot(dx, dy) || 1, f = (dd - len) / dd;
-      if (k === 1) { b.x -= dx * f; b.y -= dy * f; } else { a.x += dx * f * .5; a.y += dy * f * .5; b.x -= dx * f * .5; b.y -= dy * f * .5; }
-      if (k - 1 === 0) { a.x = tx; a.y = ty; }
-    }
-    g.globalAlpha = show; g.lineCap = "round"; g.lineJoin = "round";
-    for (let k = 1; k < NS - 1; k++) {
-      const a = pts[k], b = pts[k + 1], t = k / NS;
-      g.strokeStyle = mix(t, 1 - t * .85); g.lineWidth = 2.2 - t * .8;
-      g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke();
-    }
-    // plug: tip at the pointer, body lies along the first cable segment
-    let ang = Math.atan2(pts[1].y - ty, pts[1].x - tx); if (f > 0) { let dA = Math.PI - ang; dA = Math.atan2(Math.sin(dA), Math.cos(dA)); ang += dA * f; }
-    const s = 1 + hot * .08;
-    g.save(); g.translate(tx, ty); g.rotate(ang); g.scale(s, s);
-    g.strokeStyle = mix(0); g.lineWidth = 1.4; g.shadowColor = "rgba(170,200,255,.7)"; g.shadowBlur = 6;
-    g.fillStyle = "rgba(10,11,28,.85)";
-    g.beginPath(); g.ellipse(2, 0, 3, 9, 0, 0, 7); g.fill(); g.stroke();                       // front face
-    g.beginPath(); g.moveTo(2, -9); g.lineTo(22, -9); g.lineTo(22, 9); g.lineTo(2, 9); g.fill(); g.stroke(); // shell
-    g.beginPath(); g.ellipse(2, 0, 3, 9, 0, 0, 7); g.stroke();
-    g.strokeRect(8, -12, 8, 3);                                                                // latch
-    g.beginPath(); g.moveTo(22, -8); g.lineTo(36, -8); g.lineTo(36, 8); g.lineTo(22, 8); g.fill(); g.stroke(); // grip
-    for (let x = 25; x < 36; x += 3) { g.beginPath(); g.moveTo(x, -8); g.lineTo(x, 8); g.globalAlpha = show * .5; g.stroke(); g.globalAlpha = show; }
-    g.beginPath(); g.moveTo(36, -6); g.lineTo(PLUG, -2.5); g.lineTo(PLUG, 2.5); g.lineTo(36, 6); g.fill(); g.stroke(); // boot
-    for (let x = 39; x < PLUG; x += 3.5) { const h = 6 - (x - 36) * .25; g.beginPath(); g.moveTo(x, -h); g.lineTo(x, h); g.globalAlpha = show * .45; g.stroke(); g.globalAlpha = show; }
-    // pins light up over anything clickable
-    g.shadowBlur = 4 + hot * 12; g.shadowColor = `rgba(220,205,255,${.4 + hot * .6})`;
-    g.strokeStyle = hot > .5 ? "#f3efff" : mix(.3); g.lineWidth = 1.6;
-    [-4, 0, 4].forEach((y, k) => { g.beginPath(); g.moveTo(-4 - (k === 1 ? 0 : 0), y + (k === 1 ? 1 : 0)); g.lineTo(1, y + (k === 1 ? 1 : 0)); g.stroke(); });
-    g.restore();
-    if (hot > .05 && f < .05) { g.strokeStyle = mix(.6, hot * .8); g.lineWidth = 1.2; g.beginPath(); g.arc(mx, my, 9 + (1 - hot) * 10, 0, 7); g.stroke(); }
+    const now = performance.now() / 1000, level = Math.max(sp * (1 - hot * .7), kick), lean = Math.max(-9, Math.min(9, -vxs * .6));
+    g.lineCap = "round";
+    bars.forEach((b, k) => {
+      // position: spring toward a slot under the dot
+      const tx = mx + (k - 2) * GAP, ty = my + DROP;
+      b.vx = b.vx * DAMP + (tx - b.x) * K[k]; b.vy = b.vy * DAMP + (ty - b.y) * K[k]; b.x += b.vx; b.y += b.vy;
+      // height: a wave that travels across the bars, bigger the faster you move; a soft idle breath at rest
+      const wave = .55 + .45 * Math.sin(now * 9 - k * .9), idle = .85 + .15 * Math.sin(now * 2.2 + k * 1.3);
+      const th = 3 + H0[k] * (3 + level * (HMAX - 3) * wave) * idle + hot * 2 * H0[k];
+      b.vh = b.vh * .7 + (th - b.h) * .22; b.h += b.vh;
+      const t = k / (N - 1), top = b.y - Math.max(2, b.h), leanX = lean * (b.h / HMAX);
+      g.globalAlpha = show * (1 - hot * .4);
+      g.lineWidth = 6; g.strokeStyle = `rgba(10,11,28,${.25 + hot * .35})`;
+      g.beginPath(); g.moveTo(b.x, b.y); g.quadraticCurveTo(b.x, (b.y + top) / 2, b.x + leanX, top); g.stroke();
+      g.lineWidth = 3.4; g.strokeStyle = col(t, .95); g.shadowColor = "rgba(190,175,255,.8)"; g.shadowBlur = 4 + hot * 8;
+      g.beginPath(); g.moveTo(b.x, b.y); g.quadraticCurveTo(b.x, (b.y + top) / 2, b.x + leanX, top); g.stroke(); g.shadowBlur = 0;
+    });
+    g.globalAlpha = show; g.fillStyle = `rgba(10,11,28,${.3 + hot * .4})`; g.beginPath(); g.arc(mx, my, 6.5 + hot * 1.5, 0, 7); g.fill();
+    g.fillStyle = "#f4f0ff"; g.shadowColor = "#e6dcff"; g.shadowBlur = 10 + hot * 14; g.beginPath(); g.arc(mx, my, 4.5 + hot * 1.5, 0, 7); g.fill(); g.shadowBlur = 0;
     g.globalAlpha = 1;
   };
 }
 
-/* ---------- XLR sockets on every action button ---------- */
-const SOCK = '<svg viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="16.5"/><circle cx="18" cy="18" r="12" opacity=".45"/><path d="M15.5 1.8h5v3.4h-5z"/><circle class="hole" cx="12.8" cy="14.6" r="2.3"/><circle class="hole" cx="23.2" cy="14.6" r="2.3"/><circle class="hole" cx="18" cy="23.4" r="2.3"/></svg>';
-const PLUGSVG = '<span class="plug" aria-hidden="true"><svg viewBox="0 0 52 20"><path d="M0 8h12v4H0z"/><rect x="12" y="2" width="19" height="16" rx="3"/><path d="M31 4h10l9 4.5v3L41 16H31z"/></svg></span>';
+/* ---------- buttons: label wrapper + a short light on press ---------- */
 function armBtns() {
   document.querySelectorAll(".btn:not([data-x])").forEach(b => {
-    b.dataset.x = 1; const s = document.createElement("span"); s.className = "sock"; s.innerHTML = SOCK + PLUGSVG;
-    const l = document.createElement("span"); l.className = "lbl"; if (b.dataset.t) { l.dataset.t = b.dataset.t; b.removeAttribute("data-t"); }
-    l.textContent = b.textContent; b.textContent = ""; b.append(s, l);
+    b.dataset.x = 1; const l = document.createElement("span"); l.className = "lbl";
+    if (b.dataset.t) { l.dataset.t = b.dataset.t; b.removeAttribute("data-t"); }
+    l.textContent = b.textContent; b.textContent = ""; b.append(l);
   });
 }
-function plugIn(el, then, delay = 380) {
-  el.classList.add("lit");
-  const s = el.querySelector(".sock svg, svg") || el, r = s.getBoundingClientRect();
-  if (window.__xlrSnap) window.__xlrSnap(r.left + r.width / 2, r.top + r.height / 2);
-  if (then) setTimeout(then, reduce ? 0 : delay);
-}
+function plugIn(el) { el.classList.add("lit"); }
 document.addEventListener("click", ev => {
   const b = ev.target.closest && ev.target.closest(".btn"); if (!b || b.id === "send") return;
-  const href = b.getAttribute("href") || ""; ev.preventDefault();
-  if (href && href[0] !== "#") { plugIn(b); window.open(href, "_blank", "noopener"); setTimeout(() => b.classList.remove("lit"), 1600); return; }
-  plugIn(b, () => { const t = href && document.querySelector(href); if (t) t.scrollIntoView({ behavior: reduce ? "auto" : "smooth" }); setTimeout(() => b.classList.remove("lit"), 1200); });
+  plugIn(b); setTimeout(() => b.classList.remove("lit"), 900);
 }, true);
 
 /* ---------- booking → /api/book (Resend) ---------- */
@@ -774,7 +752,7 @@ $("form").addEventListener("submit", async ev => {
   Object.entries(errs).forEach(([k, m]) => { $("e-" + k).textContent = m; $("f-" + k).setAttribute("aria-invalid", !!m); if (m && !first) first = $("f-" + k); });
   if (first) { first.focus(); return; }
   const d = new Date(), no = "JS-" + d.getFullYear().toString().slice(2) + String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0") + "-" + Math.floor(100 + Math.random() * 900);
-  plugIn($("send")); await new Promise(r => setTimeout(r, reduce ? 0 : 380));
+  plugIn($("send"));
   sending = true; $("send").disabled = true; $("send").querySelector(".lbl").textContent = t.sending; $("msg").textContent = ""; $("msg").className = "msg";
   try {
     const r = await fetch("/api/book", { method: "POST", headers: { "Content-Type": "application/json" },
@@ -788,7 +766,7 @@ $("form").addEventListener("submit", async ev => {
 
 /* ---------- boot ---------- */
 render(); chooseSet(); size();
-(function loop() { draw(); waveDraw(); motionTick(); xlrTick(); requestAnimationFrame(loop); })();
+(function loop() { draw(); waveDraw(); motionTick(); curTick(); requestAnimationFrame(loop); })();
 fetch("content.json?v=" + Date.now(), { cache: "no-store" }).then(r => r.ok ? r.json() : null).then(c => { if (c && typeof c === "object") { applyContent(c); render(); } }).catch(() => {});
 window.__setP = p => { scrollTo(0, p * (intro.offsetHeight - maxH)); draw(true); };
 })();
