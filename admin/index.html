@@ -106,7 +106,7 @@ textarea{white-space:pre-wrap;line-height:1.55}
     <label>역할 <small>(예: 믹싱 · 마스터링 엔지니어)</small></label><div class="tri" id="e_role"></div>
     <label>소개 글</label><div class="tri" id="e_bio" data-area="1"></div>
     <label>작업 방식 <small>(예: 온라인 · 오프라인 세션 모두 가능)</small></label><div class="tri" id="e_session"></div>
-    <label>장비</label><div id="gear"></div>
+    <label>장비 <small style="font-weight:400;color:#8a7c6b">(지금 홈페이지에는 표시하지 않아요)</small></label><div id="gear"></div>
     <button class="btn ghost sm" id="addGear">+ 장비 추가</button>
   </section>
 
@@ -149,6 +149,13 @@ textarea{white-space:pre-wrap;line-height:1.55}
     <p class="hint">커버를 누르면 이미지를 올릴 수 있어요(jpg · png). 맨 위 곡이 로비 포스터와 방 액자에 먼저 걸려요.</p>
     <div class="list" id="discs"></div>
     <button class="btn ghost sm" id="addDisc" style="margin-top:12px">+ 곡 추가</button>
+  </section>
+
+  <section class="card">
+    <h2>플러그인</h2>
+    <p class="hint">홈페이지 Plugins 구간에 보여요. 하나도 없으면 "준비 중"으로 보여요. 이미지를 누르면 화면 사진을 올릴 수 있어요.</p>
+    <div class="list" id="plugs"></div>
+    <button class="btn ghost sm" id="addPlug" style="margin-top:12px">+ 플러그인 추가</button>
   </section>
 
   <section class="card">
@@ -196,7 +203,7 @@ textarea{white-space:pre-wrap;line-height:1.55}
     const r = await fetch("/content.json?v=" + Date.now(), { cache: "no-store" });
     if (!r.ok) throw new Error("content.json 파일을 찾지 못했어요. 저장소에 올라가 있는지 확인해 주세요.");
     C = await r.json();
-    C.engineer = C.engineer || {}; C.rates = C.rates || {}; C.discography = C.discography || []; C.artists = C.artists || []; C.easterEgg = C.easterEgg || { notes: [] };
+    C.engineer = C.engineer || {}; C.rates = C.rates || {}; C.discography = C.discography || []; C.artists = C.artists || []; C.plugins = C.plugins || []; C.easterEgg = C.easterEgg || { notes: [] };
     $("#login").classList.add("hidden"); $("#app").classList.remove("hidden"); $("#bar").classList.remove("hidden");
     render();
   }
@@ -234,7 +241,7 @@ textarea{white-space:pre-wrap;line-height:1.55}
     ["mix", "master", "mixmaster"].forEach(k => { const i = $("#u_" + k); i.value = C.ratesUSD[k] || ""; i.oninput = () => { C.ratesUSD[k] = Math.max(0, Math.round(+i.value || 0)); touch(); }; });
     ["mix", "master", "mixmaster"].forEach(k => { const i = $("#r_" + k); i.value = C.rates[k] || ""; i.oninput = () => { C.rates[k] = Math.max(0, Math.round(+i.value || 0)); touch(); }; });
     $("#discOpen").checked = !!C.discographyOpen; $("#discOpen").onchange = ev => { C.discographyOpen = ev.target.checked; touch(); };
-    renderDiscs(); renderArtists();
+    renderDiscs(); renderArtists(); renderPlugs();
     $("#egg").value = (C.easterEgg.notes || []).join(" "); $("#egg").oninput = () => { checkEgg(); touch(); }; checkEgg();
   }
   function renderGear(){
@@ -272,6 +279,34 @@ textarea{white-space:pre-wrap;line-height:1.55}
   };
   $("#addDisc").onclick = () => { C.discography.unshift({ year: new Date().getFullYear(), artist: "", title: "", role: "Mix", cover: "" }); Object.keys(previews).forEach(k => delete previews[k]); renderDiscs(); touch(); };
 
+  // ---------- plugins ----------
+  const plugPrev = {};
+  function renderPlugs(){
+    const P = C.plugins;
+    $("#plugs").innerHTML = P.map((p, i) => `<div class="item"><div class="disc">
+        <div class="cover" data-pimg="${i}" style="${plugPrev[i] || p.image ? `background-image:url('${esc(plugPrev[i] || "/" + p.image)}')` : ""}">${plugPrev[i] || p.image ? "" : "사진 올리기"}</div>
+        <div class="f">
+          <div class="wide"><label>플러그인 이름</label><input type="text" data-pi="${i}" data-k="name" value="${esc(p.name)}"></div>
+          <div><label>상태</label><select data-pi="${i}" data-k="status"><option value="soon" ${p.status !== "sale" ? "selected" : ""}>출시 예정</option><option value="sale" ${p.status === "sale" ? "selected" : ""}>판매 중</option></select></div>
+          <div><label>가격 (예: $49)</label><input type="text" data-pi="${i}" data-k="price" value="${esc(p.price)}"></div>
+          <div><label>구매 · 소개 링크</label><input type="url" data-pi="${i}" data-k="link" value="${esc(p.link)}" placeholder="https://"></div>
+        </div></div>
+        <label style="margin-top:10px">설명</label><div class="tri" id="pd_${i}"></div>
+        <div class="tools"><button class="btn ghost sm" data-pmv="${i}" data-d="-1">↑ 위로</button><button class="btn ghost sm" data-pmv="${i}" data-d="1">↓ 아래로</button>${p.image ? `<button class="btn ghost sm" data-pnoimg="${i}">사진 빼기</button>` : ""}<button class="btn ghost sm" data-pdel="${i}">삭제</button></div></div>`).join("") || `<p class="hint">아직 플러그인이 없어요.</p>`;
+    P.forEach((p, i) => tri($("#pd_" + i), p.desc, true, o => p.desc = o));
+  }
+  $("#plugs").oninput = ev => { const t = ev.target; if (t.dataset.pi == null) return; C.plugins[+t.dataset.pi][t.dataset.k] = t.value; touch(); };
+  $("#plugs").onchange = $("#plugs").oninput;
+  $("#plugs").onclick = ev => {
+    const t = ev.target.closest("[data-pimg],[data-pmv],[data-pdel],[data-pnoimg]"); if (!t) return; const P = C.plugins;
+    if (t.dataset.pimg != null){ pickCover(-100 - +t.dataset.pimg); return; }
+    if (t.dataset.pmv != null){ const i = +t.dataset.pmv, j = i + (+t.dataset.d); if (j < 0 || j >= P.length) return; [P[i], P[j]] = [P[j], P[i]]; [plugPrev[i], plugPrev[j]] = [plugPrev[j], plugPrev[i]]; }
+    if (t.dataset.pdel != null){ if (!confirm("이 플러그인을 목록에서 뺄까요?")) return; P.splice(+t.dataset.pdel, 1); Object.keys(plugPrev).forEach(k => delete plugPrev[k]); }
+    if (t.dataset.pnoimg != null){ P[+t.dataset.pnoimg].image = ""; delete plugPrev[+t.dataset.pnoimg]; }
+    renderPlugs(); touch();
+  };
+  $("#addPlug").onclick = () => { C.plugins.push({ name: "", status: "soon", price: "", link: "", image: "", desc: { ko: "", ja: "", en: "" } }); renderPlugs(); touch(); };
+
   let photoPreview = "";
   function renderPhoto(){
     const e = C.engineer, u = photoPreview || (e.photo ? "/" + e.photo : "");
@@ -292,6 +327,16 @@ textarea{white-space:pre-wrap;line-height:1.55}
         C.engineer.photo = j.path; renderPhoto(); touch();
         setStatus("사진을 올렸어요. 저장을 눌러야 사이트에 반영돼요.");
       } catch(e){ photoPreview = ""; renderPhoto(); setStatus("사진을 올리지 못했어요: " + e.message, true); }
+      return;
+    }
+    if (coverFor <= -100){
+      const i = -100 - coverFor; setStatus("플러그인 사진을 올리는 중…");
+      try {
+        const url = await shrink(f, 1400); plugPrev[i] = url; renderPlugs();
+        const j = await api("/api/upload", { name: "plugin-" + (f.name || "image").replace(/\.[^.]+$/, "") + ".jpg", data: url.split(",")[1] });
+        C.plugins[i].image = j.path; renderPlugs(); touch();
+        setStatus("사진을 올렸어요. 저장을 눌러야 사이트에 반영돼요.");
+      } catch(e){ delete plugPrev[i]; renderPlugs(); setStatus("사진을 올리지 못했어요: " + e.message, true); }
       return;
     }
     const i = coverFor; setStatus("커버를 올리는 중…");

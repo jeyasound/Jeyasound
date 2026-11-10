@@ -38,7 +38,7 @@ module.exports = async (req, res) => {
   if (!key || !to) return res.status(500).json({ ok: false, error: "mail not configured" });
 
   const rows = [["신청 번호", f.no], ["엔지니어", f.engineer || "상관없음"], ["이름 / 회사", f.name], ["이메일", f.email], ["전화", f.phone],
-                ["스포티파이", f.spotify], ["참고 음원 링크", f.link], ["사이트 언어", { ko: "한국어", ja: "日本語", en: "English" }[f.lang] || f.lang]];
+                ["레퍼런스 곡", f.spotify], ["참고 음원 링크", f.link], ["사이트 언어", { ko: "한국어", ja: "日本語", en: "English" }[f.lang] || f.lang]];
   const text = rows.map(([k, v]) => `${k}: ${v || "-"}`).join("\n") + "\n\n이 메일에 답장하면 신청자에게 바로 갑니다.";
   const html = `<div style="font-family:-apple-system,'Apple SD Gothic Neo',sans-serif;font-size:15px;line-height:1.6;color:#1f1b17">
     <h2 style="margin:0 0 12px;font-size:18px">새 믹싱 의뢰가 들어왔어요</h2>
