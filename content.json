@@ -63,7 +63,7 @@
     "master": 80000,
     "mixmaster": 350000
   },
-  "discographyOpen": true,
+  "discographyOpen": false,
   "discography": [
     {
       "year": 2023,
@@ -161,5 +161,6 @@
     "mix": 30000,
     "master": 8000,
     "mixmaster": 35000
-  }
+  },
+  "plugins": []
 }
